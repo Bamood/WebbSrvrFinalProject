@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+</head>
+<body>
+    <h2>Logga in</h2>
+    <form id="loginForm">
+        <label for="username">Användarnamn:</label>
+        <input type="text" id="username" required>
+        <br>
+        <label for="password">Lösenord:</label>
+        <input type="password" id="password" required>
+        <br>
+        <button type="submit">Logga in</button>
+    </form>
+    
+    <h2>Skyddad sida</h2>
+    <button id="getData">Hämta användardata</button>
+    <p id="userData"></p>
+    
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            
+            const response = await fetch("http://localhost:8000/api/tokens/login", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                sessionStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+                alert("Inloggning lyckades!");
+            } else {
+                alert("Fel: " + data.error);
+            }
+        });
+        
+        document.getElementById("getData").addEventListener("click", async function() {
+            const access_token = sessionStorage.getItem("access_token");
+            const response = await fetch("http://localhost:8000/api/user", {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Authorization": "Bearer " + access_token
+                }
+            });
+            
+            if (response.status === 401) {
+                await refreshAccessToken();
+                return document.getElementById("getData").click();
+            }
+            
+            const data = await response.json();
+            document.getElementById("userData").textContent = "Välkommen, " + data.username;
+        });
+        
+        async function refreshAccessToken() {
+            const refresh_token = localStorage.getItem("refresh_token");
+            const response = await fetch("http://localhost:8000/api/tokens/refresh", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Authorization": "Bearer " + refresh_token
+                }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                sessionStorage.setItem("access_token", data.access_token);
+            } else {
+                alert("Sessionen har gått ut. Logga in igen.");
+            }
+        }
+    </script>
+</body>
+</html>
