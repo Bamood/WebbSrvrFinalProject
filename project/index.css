@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Geo:ital@0;1&display=swap');
+
+body {
+    font-family: 'Geo', Arial, sans-serif;
+    background-color: #000000;
+    color: #3cff00;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+header {
+    background-color: #000000;
+    text-align: center;
+    padding: 20px;
+}
+
+header h1 {
+    font-size: 3rem;
+    color: #3cff00;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    background-color: #1d1d1d;
+    padding: 10px;
+}
+
+nav a {
+    color: #3cff00;
+    text-decoration: none;
+    margin: 10px;
+    padding: 8px;
+    font-size: 1.5rem;
+}
+
+
+.featured .article{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1d1d1d;
+    color: #3cff00;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+
+}
+
+.featured img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+.articleGrid .grid {
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.article {
+    flex: 1 1 25%;
+    background-color: #1d1d1d;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    color: #3cff00;
+}
+
+.article h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 1020px) {
+    header h1 {
+        font-size: 3rem;
+    }
+    .article {
+        flex: 1 1 100%;
+    }
+
+}
+
+@media (max-width: 720px) {
+    header h1 {
+        font-size: 2.5rem;
+    }
+
+    .article {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .article {
+        flex: 1 1 100%;
+    }
+
+    nav a {
+        font-size: 1rem;
+        padding: 5px;
+    }
+
+}

@@ -3,84 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login System</title>
+    <title>Gaming News Hub</title>
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <h2>Logga in</h2>
-    <form id="loginForm">
-        <label for="username">Användarnamn:</label>
-        <input type="text" id="username" required>
-        <br>
-        <label for="password">Lösenord:</label>
-        <input type="password" id="password" required>
-        <br>
-        <button type="submit">Logga in</button>
-    </form>
-    
-    <h2>Skyddad sida</h2>
-    <button id="getData">Hämta användardata</button>
-    <p id="userData"></p>
-    
-    <script>
-        document.getElementById("loginForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
-            
-            const response = await fetch("http://localhost:8000/api/tokens/login", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ username, password })
-            });
-            
-            const data = await response.json();
-            if (response.ok) {
-                sessionStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
-                alert("Inloggning lyckades!");
-            } else {
-                alert("Fel: " + data.error);
-            }
-        });
+
+<header>
+    <h1>Gaming News Hub</h1>
+    <p>Your source for the latest in gaming!</p>
+</header>
+
+<nav>
+    <a href="#">Home</a>
+    <a href="#">News</a>
+    <a href="#">Reviews</a>
+    <a href="#">Shop</a>
+    <a href="#">About</a>
+</nav>
+
+<main>
+    <section class="featured">
+                    
+        <h2>Featured Article</h2>
+
+        <div>
+
+            <div class="article">
+
+                <img src="bilder/cyber.jpg" alt="A cyber picture"
+
+                srcset= 'bilder/cyber-240.jpg 240w,
+                    bilder/cyber-480.jpg 480w,
+                    bilder/cyber-672.jpg 672w'
         
-        document.getElementById("getData").addEventListener("click", async function() {
-            const access_token = sessionStorage.getItem("access_token");
-            const response = await fetch("http://localhost:8000/api/user", {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Authorization": "Bearer " + access_token
-                }
-            });
-            
-            if (response.status === 401) {
-                await refreshAccessToken();
-                return document.getElementById("getData").click();
-            }
-            
-            const data = await response.json();
-            document.getElementById("userData").textContent = "Välkommen, " + data.username;
-        });
+                sizes="(max-width: 480px) 100vw,
+                   (max-width: 960px) 70vw,
+                   672px"
+                >
         
-        async function refreshAccessToken() {
-            const refresh_token = localStorage.getItem("refresh_token");
-            const response = await fetch("http://localhost:8000/api/tokens/refresh", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Authorization": "Bearer " + refresh_token
-                }
-            });
-            const data = await response.json();
-            if (response.ok) {
-                sessionStorage.setItem("access_token", data.access_token);
-            } else {
-                alert("Sessionen har gått ut. Logga in igen.");
-            }
-        }
-    </script>
+                <h3>Latest Release: Cyber Hacker Simulator</h3>
+                <p>Explore the cyber world in this new and exciting hacker simulator!</p>
+
+            </div>
+            
+        </div>
+
+    </section>
+
+
+    <section class="articleGrid">
+        <h2>More Articles</h2>
+        <div class="grid">
+            <div class="article">
+                <h3>Top 10 Games of 2024</h3>
+                <p>Check out the best games of the year.</p>
+            </div>
+            <div class="article">
+                <h3>Guide: Master FPS Games</h3>
+                <p>Improve your aim with pro tips.</p>
+            </div>
+            <div class="article">
+                <h3>E-Sports Highlights</h3>
+                <p>Recap of the biggest tournament.</p>
+            </div>
+            <div class="article">
+                <h3>Indie Spotlight</h3>
+                <p>Discover hidden indie gems.</p>
+            </div>
+            <div class="article">
+                <h3>Top 10 Games of 2024</h3>
+                <p>Check out the best games of the year.</p>
+            </div>
+            <div class="article">
+                <h3>Guide: Master FPS Games</h3>
+                <p>Improve your aim with pro tips.</p>
+            </div>
+            <div class="article">
+                <h3>E-Sports Highlights</h3>
+                <p>Recap of the biggest tournament.</p>
+            </div>
+            <div class="article">
+                <h3>Indie Spotlight</h3>
+                <p>Discover hidden indie gems.</p>
+            </div>
+            <div class="article">
+                <h3>Top 10 Games of 2024</h3>
+                <p>Check out the best games of the year.</p>
+            </div>
+            <div class="article">
+                <h3>Guide: Master FPS Games</h3>
+                <p>Improve your aim with pro tips.</p>
+            </div>
+            <div class="article">
+                <h3>E-Sports Highlights</h3>
+                <p>Recap of the biggest tournament.</p>
+            </div>
+            <div class="article">
+                <h3>Indie Spotlight</h3>
+                <p>Discover hidden indie gems.</p>
+            </div>
+            <div class="article">
+                <h3>Top 10 Games of 2024</h3>
+                <p>Check out the best games of the year.</p>
+            </div>
+            <div class="article">
+                <h3>Guide: Master FPS Games</h3>
+                <p>Improve your aim with pro tips.</p>
+            </div>
+            <div class="article">
+                <h3>E-Sports Highlights</h3>
+                <p>Recap of the biggest tournament.</p>
+            </div>
+            <div class="article">
+                <h3>Indie Spotlight</h3>
+                <p>Discover hidden indie gems.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>2024 Gaming News Hub</p>
+</footer>
+
 </body>
 </html>
