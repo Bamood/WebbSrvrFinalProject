@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+
+    <h2>Register User</h2>
+    <form id="registerForm">
+        <label for="regUsername">Username:</label>
+        <input type="text" id="regUsername" required>
+        <br>
+        <label for="regEmail">Email:</label>
+        <input type="email" id="regEmail" required>
+        <br>
+        <label for="regPassword">Password:</label>
+        <input type="password" id="regPassword" required>
+        <br>
+        <button type="submit">Register</button>
+    </form>
+
+    <h2>Create Post</h2>
+    <form id="postForm">
+        <label for="postUsername">Username:</label>
+        <input type="text" id="postUsername" required>
+        <br>
+        <label for="postTitle">Title:</label>
+        <input type="text" id="postTitle" required>
+        <br>
+        <label for="postContent">Content:</label>
+        <textarea id="postContent" required></textarea>
+        <br>
+        <button type="submit">Create Post</button>
+    </form>
+
+    <h2>Delete Post</h2>
+    <form id="deleteForm">
+        <label for="deletePostId">Post ID:</label>
+        <input type="text" id="deletePostId" required>
+        <br>
+        <button type="submit">Delete Post</button>
+    </form>
+
+    <h2>Delete User</h2>
+    <form id="deleteUserForm">
+        <label for="deleteUsername">Username:</label>
+        <input type="text" id="deleteUsername" required>
+        <br>
+        <button type="submit">Delete User</button>
+    </form>
+
+    <script>
+        document.getElementById("registerForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const username = document.getElementById("regUsername").value;
+            const email = document.getElementById("regEmail").value;
+            const password = document.getElementById("regPassword").value;
+
+            const response = await fetch("http://localhost:8000/api/users/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await response.json();
+            alert(response.ok ? "User registered successfully!" : "Error: " + data.error);
+        });
+
+        document.getElementById("postForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const username = document.getElementById("postUsername").value;
+            const title = document.getElementById("postTitle").value;
+            const content = document.getElementById("postContent").value;
+
+            const response = await fetch("http://localhost:8000/api/posts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, title, content })
+            });
+
+            const data = await response.json();
+            alert(response.ok ? "Post created successfully!" : "Error: " + data.error);
+        });
+
+        document.getElementById("deleteForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const postId = document.getElementById("deletePostId").value;
+
+            const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": "Bearer " + sessionStorage.getItem("access_token")
+                }
+            });
+
+            const data = await response.json();
+            alert(response.ok ? "Post deleted successfully!" : "Error: " + data.error);
+        });
+
+        document.getElementById("deleteUserForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const username = document.getElementById("deleteUsername").value;
+
+            const response = await fetch(`http://localhost:8000/api/users/${username}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": "Bearer " + sessionStorage.getItem("access_token")
+                }
+            });
+
+            const data = await response.json();
+            alert(response.ok ? "User deleted successfully!" : "Error: " + data.error);
+        });
+    </script>
+</body>
+</html>
