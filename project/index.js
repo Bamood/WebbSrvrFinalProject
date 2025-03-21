@@ -29,6 +29,14 @@ db.connect(err => {
 });
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+// Function to generate access and refresh tokens
+function generateTokens(user) {
+    const accessToken = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: "1h" });
+    const refreshToken = jwt.sign({ username: user.username }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
+    return { accessToken, refreshToken };
+}
 
 // Registreringsrutt med validering
 app.post("/api/users/register",
@@ -44,27 +52,80 @@ app.post("/api/users/register",
         }
 
         const { username, email, password } = req.body;
-        const hashedPassword = await argon2.hash(password);
+        try {
+            const hashedPassword = await argon2.hash(password);
 
-        db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, email], (err, results) => {
-            if (err) {
-                console.error("Database query error:", err);
-                return res.status(500).json({ error: "Database error" });
-            }
-            if (results.length > 0) {
-                return res.status(400).json({ error: "Username or email already exists" });
-            }
+            db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, email], (err, results) => {
+                if (err) {
+                    console.error("Database query error:", err);
+                    return res.status(500).json({ error: "Database error" });
+                }
+                if (results.length > 0) {
+                    return res.status(400).json({ error: "Username or email already exists" });
+                }
 
-            db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-                [username, email, hashedPassword], (err, results) => {
-                    if (err) {
-                        console.error("Database insert error:", err);
-                        return res.status(500).json({ error: "Database error" });
-                    }
-                    res.status(201).json({ message: "User registered successfully" });
-                });
-        });
+                db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                    [username, email, hashedPassword], (err, results) => {
+                        if (err) {
+                            console.error("Database insert error:", err);
+                            return res.status(500).json({ error: "Database error" });
+                        }
+                        res.status(201).json({ message: "User registered successfully" });
+                    });
+            });
+        } catch (error) {
+            console.error("Error hashing password:", error);
+            return res.status(500).json({ error: "Internal server error" });
+        }
     });
+
+// Login route to generate access and refresh tokens
+app.post("/api/users/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
+        if (err) {
+            console.error("Database query error:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (results.length === 0) {
+            return res.status(400).json({ error: "Invalid username or password" });
+        }
+
+        const user = results[0];
+        const passwordHash = user.password.toString(); // Convert Buffer to string
+        console.log("Retrieved password hash:", passwordHash); // Log the password hash for debugging
+
+        try {
+            const validPassword = await argon2.verify(passwordHash, password);
+            if (!validPassword) {
+                return res.status(400).json({ error: "Invalid username or password" });
+            }
+
+            const { accessToken, refreshToken } = generateTokens(user);
+            res.json({ access_token: accessToken, refresh_token: refreshToken });
+        } catch (error) {
+            console.error("Error verifying password:", error);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    });
+});
+
+// Route to refresh access token
+app.post("/api/users/refresh-token", (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(401).json({ error: "No refresh token provided" });
+    }
+
+    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
+        if (err) return res.status(403).json({ error: "Invalid refresh token" });
+
+        const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
+        res.json({ access_token: accessToken, refresh_token: newRefreshToken });
+    });
+});
 
 // CRUD för inlägg
 app.post("/api/posts",
@@ -78,12 +139,23 @@ app.post("/api/posts",
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { username, title, content } = req.body;
-        db.query("INSERT INTO posts (user, title, content) VALUES (?, ?, ?)",
-            [username, title, content], (err, result) => {
-                if (err) return res.status(500).json({ error: "Database error" });
-                res.status(201).json({ message: "Post created successfully" });
-            });
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ error: "No access token provided" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) return res.status(403).json({ error: "Invalid access token" });
+
+            const { title, content } = req.body;
+            const username = decoded.username;
+            db.query("INSERT INTO posts (user, title, content) VALUES (?, ?, ?)",
+                [username, title, content], (err, result) => {
+                    if (err) return res.status(500).json({ error: "Database error" });
+                    res.status(201).json({ message: "Post created successfully" });
+                });
+        });
     });
 
 app.delete("/api/posts/:id", (req, res) => {
@@ -133,12 +205,23 @@ app.post("/api/comments",
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { postId, username, comment } = req.body;
-        db.query("INSERT INTO comments (postId, user, comment) VALUES (?, ?, ?)",
-            [postId, username, comment], (err, result) => {
-                if (err) return res.status(500).json({ error: "Database error" });
-                res.status(201).json({ message: "Comment created successfully" });
-            });
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ error: "No access token provided" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) return res.status(403).json({ error: "Invalid access token" });
+
+            const { postId, comment } = req.body;
+            const username = decoded.username;
+            db.query("INSERT INTO comments (postId, user, comment) VALUES (?, ?, ?)",
+                [postId, username, comment], (err, result) => {
+                    if (err) return res.status(500).json({ error: "Database error" });
+                    res.status(201).json({ message: "Comment created successfully" });
+                });
+        });
     });
 
 app.delete("/api/comments/:id", (req, res) => {
@@ -177,8 +260,7 @@ app.delete("/api/comments/:id", (req, res) => {
 });
 
 // Route för att ta bort användare
-app.delete("/api/users/:username", (req, res) => {
-    const { username } = req.params;
+app.delete("/api/users/delete", (req, res) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -189,6 +271,7 @@ app.delete("/api/users/:username", (req, res) => {
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) return res.status(403).json({ error: "Invalid access token" });
 
+        const username = decoded.username;
         db.query("SELECT * FROM users WHERE username = ?", [username], (err, userResults) => {
             if (err || userResults.length === 0) {
                 return res.status(404).json({ error: "User not found" });
