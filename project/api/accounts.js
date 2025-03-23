@@ -1,26 +1,16 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const argon2 = require("argon2");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken } = require("./middleware");
+const { validateRequest, verifyToken, generateTokens, refreshToken } = require("./tokenManager");
 const router = express.Router();
 require("dotenv").config();
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-
-const generateTokens = (user) => {
-    const accessToken = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: "1h" });
-    const refreshToken = jwt.sign({ username: user.username }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
-    return { accessToken, refreshToken };
-};
-
 router.post("/register",
     validateRequest([
-        body("username").isLength({ min: 3, max: 30 }),
-        body("email").isEmail(),
-        body("password").isLength({ min: 4 })
+        body("username").isLength({ min: 3, max: 30 }).escape(),
+        body("email").isEmail().normalizeEmail(),
+        body("password").isLength({ min: 4 }).escape()
     ]),
     async (req, res) => {
         const { username, email, password } = req.body;
@@ -60,16 +50,16 @@ router.post("/login", async (req, res) => {
     });
 });
 
-router.post("/refresh-token", (req, res) => {
-    const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(401).json({ error: "No refresh token provided" });
+router.post("/refresh-token", async (req, res) => {
+    const { refreshToken: token } = req.body;
+    if (!token) return res.status(401).json({ error: "No refresh token provided" });
 
-    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
-        if (err) return res.status(403).json({ error: "Invalid refresh token" });
-
-        const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
+    try {
+        const { accessToken, newRefreshToken } = await refreshToken(token);
         res.json({ access_token: accessToken, refresh_token: newRefreshToken });
-    });
+    } catch (error) {
+        res.status(403).json({ error });
+    }
 });
 
 router.delete("/delete", verifyToken, (req, res) => {
@@ -81,6 +71,48 @@ router.delete("/delete", verifyToken, (req, res) => {
             if (err) return res.status(500).json({ error: "Database error" });
             res.json({ message: "User deleted successfully" });
         });
+    });
+});
+
+router.put("/change-password",
+    verifyToken,
+    validateRequest([
+        body("currentPassword").isLength({ min: 4 }),
+        body("newPassword").isLength({ min: 4 })
+    ]),
+    async (req, res) => {
+        const { currentPassword, newPassword } = req.body;
+        const { username } = req.user;
+
+        db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
+            if (err) return res.status(500).json({ error: "Database error" });
+            if (results.length === 0) return res.status(404).json({ error: "User not found" });
+
+            const user = results[0];
+            try {
+                const validPassword = await argon2.verify(user.password.toString(), currentPassword);
+                if (!validPassword) return res.status(400).json({ error: "Current password is incorrect" });
+
+                const hashedNewPassword = await argon2.hash(newPassword);
+                db.query("UPDATE users SET password = ? WHERE username = ?", [hashedNewPassword, username], (err) => {
+                    if (err) return res.status(500).json({ error: "Database error" });
+                    res.json({ message: "Password changed successfully" });
+                });
+            } catch (error) {
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
+    });
+
+router.get("/info", verifyToken, (req, res) => {
+    const { username } = req.user;
+
+    db.query("SELECT username, email FROM users WHERE username = ?", [username], (err, results) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        if (results.length === 0) return res.status(404).json({ error: "User not found" });
+
+        const user = results[0];
+        res.json({ username: user.username, email: user.email });
     });
 });
 

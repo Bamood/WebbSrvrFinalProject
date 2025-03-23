@@ -76,8 +76,26 @@
         <button type="submit">Delete Comment</button>
     </form>
 
+    <h2>Change Password</h2>
+    <form id="changePasswordForm">
+        <label for="currentPassword">Current Password:</label>
+        <input type="password" id="currentPassword" required>
+        <br>
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" required>
+        <br>
+        <button type="submit">Change Password</button>
+    </form>
+
     <h2>Logout</h2>
     <button id="logoutButton">Logout</button>
+
+    <h2>Show Information</h2>
+    <button id="showInfoButton">Show Information</button>
+    <div id="userInfo" style="display: none;">
+        <p>Username: <span id="infoUsername"></span></p>
+        <p>Email: <span id="infoEmail"></span></p>
+    </div>
 
     <script>
         // Function to refresh the access token
@@ -105,6 +123,15 @@
                 alert("Failed to refresh token. Please log in again.");
                 return false;
             }
+        }
+
+        // Function to encode HTML entities
+        function encodeHTML(str) {
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
         }
 
         document.getElementById("registerForm").addEventListener("submit", async function(event) {
@@ -267,6 +294,30 @@
             alert(response.ok ? "Comment deleted successfully!" : "Error: " + data.error);
         });
 
+        document.getElementById("changePasswordForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById("currentPassword").value;
+            const newPassword = document.getElementById("newPassword").value;
+            const token = sessionStorage.getItem("access_token");
+
+            if (!token) {
+                alert("You must be logged in to change your password.");
+                return;
+            }
+
+            const response = await fetch("http://localhost:8000/api/accounts/change-password", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+
+            const data = await response.json();
+            alert(response.ok ? "Password changed successfully!" : "Error: " + data.error);
+        });
+
         document.getElementById("logoutButton").addEventListener("click", function() {
             const token = sessionStorage.getItem("access_token");
             if (!token) {
@@ -277,6 +328,31 @@
             sessionStorage.removeItem("access_token");
             sessionStorage.removeItem("refresh_token");
             alert("Logged out successfully!");
+        });
+
+        document.getElementById("showInfoButton").addEventListener("click", async function() {
+            const token = sessionStorage.getItem("access_token");
+
+            if (!token) {
+                alert("You must be logged in to view your information.");
+                return;
+            }
+
+            const response = await fetch("http://localhost:8000/api/accounts/info", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById("infoUsername").textContent = encodeHTML(data.username);
+                document.getElementById("infoEmail").textContent = encodeHTML(data.email);
+                document.getElementById("userInfo").style.display = "block";
+            } else {
+                alert("Error: " + data.error);
+            }
         });
     </script>
 </body>

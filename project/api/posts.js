@@ -1,7 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken } = require("./middleware");
+const { validateRequest, verifyToken } = require("./tokenManager");
 const router = express.Router();
 
 router.post("/",

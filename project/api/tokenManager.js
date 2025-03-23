@@ -3,6 +3,7 @@ const { validationResult } = require("express-validator");
 require("dotenv").config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 const validateRequest = (validations) => {
     return async (req, res, next) => {
@@ -29,4 +30,20 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-module.exports = { validateRequest, verifyToken };
+const generateTokens = (user) => {
+    const accessToken = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: "1h" });
+    const refreshToken = jwt.sign({ username: user.username }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
+    return { accessToken, refreshToken };
+};
+
+const refreshToken = (refreshToken) => {
+    return new Promise((resolve, reject) => {
+        jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
+            if (err) return reject("Invalid refresh token");
+            const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
+            resolve({ accessToken, newRefreshToken });
+        });
+    });
+};
+
+module.exports = { validateRequest, verifyToken, generateTokens, refreshToken };
