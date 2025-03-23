@@ -43,7 +43,7 @@ router.post("/login", async (req, res) => {
             if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
 
             const { accessToken, refreshToken, fingerprint } = generateTokens(user);
-            res.cookie("fingerprint", fingerprint, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" })
+            res.cookie("fingerprint", fingerprint, { httpOnly: true, secure: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" })
                 .status(200)
                 .json({ access_token: accessToken, refresh_token: refreshToken });
         } catch (error) {
