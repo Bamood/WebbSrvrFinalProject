@@ -42,8 +42,10 @@ router.post("/login", async (req, res) => {
             const validPassword = await argon2.verify(user.password.toString(), password);
             if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
 
-            const { accessToken, refreshToken } = generateTokens(user);
-            res.json({ access_token: accessToken, refresh_token: refreshToken });
+            const { accessToken, refreshToken, fingerprint } = generateTokens(user);
+            res.cookie("fingerprint", fingerprint, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" })
+                .status(200)
+                .json({ access_token: accessToken, refresh_token: refreshToken });
         } catch (error) {
             res.status(500).json({ error: "Internal server error" });
         }
@@ -52,10 +54,13 @@ router.post("/login", async (req, res) => {
 
 router.post("/refresh-token", async (req, res) => {
     const { refreshToken: token } = req.body;
+    const fingerprint = req.cookies["fingerprint"];
     if (!token) return res.status(401).json({ error: "No refresh token provided" });
+    if (!fingerprint) return res.status(401).json({ error: "No fingerprint provided" });
 
     try {
-        const { accessToken, newRefreshToken } = await refreshToken(token);
+        const { accessToken, newRefreshToken, newFingerprint } = await refreshToken(token, fingerprint);
+        res.cookie("fingerprint", newFingerprint, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" });
         res.json({ access_token: accessToken, refresh_token: newRefreshToken });
     } catch (error) {
         res.status(403).json({ error });

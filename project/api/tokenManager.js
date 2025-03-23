@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { validationResult } = require("express-validator");
+const sha256 = require("js-sha256").sha256;
 require("dotenv").config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -31,17 +33,22 @@ const verifyToken = (req, res, next) => {
 };
 
 const generateTokens = (user) => {
-    const accessToken = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: "1h" });
-    const refreshToken = jwt.sign({ username: user.username }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
-    return { accessToken, refreshToken };
+    const accessToken = jwt.sign({ username: user.username, auth: "user" }, JWT_SECRET, { expiresIn: "10m" });
+    const fingerprint = crypto.randomBytes(32).toString('base64');
+    const hash = sha256(fingerprint);
+    const refreshToken = jwt.sign({ username: user.username, fingerprint: Buffer.from(hash).toString('base64') }, JWT_REFRESH_SECRET, { expiresIn: "12h" });
+    return { accessToken, refreshToken, fingerprint };
 };
 
-const refreshToken = (refreshToken) => {
+const refreshToken = (refreshToken, fingerprint) => {
     return new Promise((resolve, reject) => {
         jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
             if (err) return reject("Invalid refresh token");
-            const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
-            resolve({ accessToken, newRefreshToken });
+            if (sha256(fingerprint) !== Buffer.from(decoded.fingerprint, 'base64').toString('utf-8')) {
+                return reject("Invalid fingerprint");
+            }
+            const { accessToken, refreshToken: newRefreshToken, fingerprint: newFingerprint } = generateTokens(decoded);
+            resolve({ accessToken, newRefreshToken, newFingerprint });
         });
     });
 };

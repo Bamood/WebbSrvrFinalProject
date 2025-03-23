@@ -100,7 +100,7 @@
     <script>
         // Function to refresh the access token
         async function refreshToken() {
-            const refreshToken = sessionStorage.getItem("refresh_token");
+            const refreshToken = localStorage.getItem("refresh_token");
             if (!refreshToken) {
                 alert("No refresh token available. Please log in again.");
                 return false;
@@ -108,6 +108,7 @@
 
             const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -117,7 +118,7 @@
             const data = await response.json();
             if (response.ok) {
                 sessionStorage.setItem("access_token", data.access_token);
-                sessionStorage.setItem("refresh_token", data.refresh_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
                 return true;
             } else {
                 alert("Failed to refresh token. Please log in again.");
@@ -159,6 +160,7 @@
 
             const response = await fetch("http://localhost:8000/api/accounts/login", {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -168,7 +170,7 @@
             const data = await response.json();
             if (response.ok) {
                 sessionStorage.setItem("access_token", data.access_token);
-                sessionStorage.setItem("refresh_token", data.refresh_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
                 alert("Login successful!");
             } else {
                 alert("Error: " + data.error);
@@ -248,7 +250,7 @@
             const data = await response.json();
             if (response.ok) {
                 sessionStorage.removeItem("access_token");
-                sessionStorage.removeItem("refresh_token");
+                localStorage.removeItem("refresh_token");
                 alert("User deleted successfully!");
             } else {
                 alert("Error: " + data.error);
@@ -326,7 +328,7 @@
             }
 
             sessionStorage.removeItem("access_token");
-            sessionStorage.removeItem("refresh_token");
+            localStorage.removeItem("refresh_token");
             alert("Logged out successfully!");
         });
 
