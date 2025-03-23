@@ -137,9 +137,9 @@
 
         document.getElementById("registerForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const username = document.getElementById("regUsername").value;
-            const email = document.getElementById("regEmail").value;
-            const password = document.getElementById("regPassword").value;
+            const username = encodeHTML(document.getElementById("regUsername").value);
+            const email = encodeHTML(document.getElementById("regEmail").value);
+            const password = encodeHTML(document.getElementById("regPassword").value);
 
             const response = await fetch("http://localhost:8000/api/accounts/register", {
                 method: "POST",
@@ -155,8 +155,8 @@
 
         document.getElementById("loginForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const username = document.getElementById("loginUsername").value;
-            const password = document.getElementById("loginPassword").value;
+            const username = encodeHTML(document.getElementById("loginUsername").value);
+            const password = encodeHTML(document.getElementById("loginPassword").value);
 
             const response = await fetch("http://localhost:8000/api/accounts/login", {
                 method: "POST",
@@ -179,8 +179,8 @@
 
         document.getElementById("postForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const title = document.getElementById("postTitle").value;
-            const content = document.getElementById("postContent").value;
+            const title = encodeHTML(document.getElementById("postTitle").value);
+            const content = encodeHTML(document.getElementById("postContent").value);
             let token = sessionStorage.getItem("access_token");
 
             if (!token) {
@@ -218,7 +218,7 @@
 
         document.getElementById("deleteForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const postId = document.getElementById("deletePostId").value;
+            const postId = encodeHTML(document.getElementById("deletePostId").value);
 
             const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
                 method: "DELETE",
@@ -259,8 +259,8 @@
 
         document.getElementById("commentForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const postId = document.getElementById("commentPostId").value;
-            const comment = document.getElementById("commentContent").value;
+            const postId = encodeHTML(document.getElementById("commentPostId").value);
+            const comment = encodeHTML(document.getElementById("commentContent").value);
             const token = sessionStorage.getItem("access_token");
 
             if (!token) {
@@ -283,7 +283,7 @@
 
         document.getElementById("deleteCommentForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const commentId = document.getElementById("deleteCommentId").value;
+            const commentId = encodeHTML(document.getElementById("deleteCommentId").value);
 
             const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
                 method: "DELETE",
@@ -298,8 +298,8 @@
 
         document.getElementById("changePasswordForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const currentPassword = document.getElementById("currentPassword").value;
-            const newPassword = document.getElementById("newPassword").value;
+            const currentPassword = encodeHTML(document.getElementById("currentPassword").value);
+            const newPassword = encodeHTML(document.getElementById("newPassword").value);
             const token = sessionStorage.getItem("access_token");
 
             if (!token) {

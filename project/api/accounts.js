@@ -8,7 +8,7 @@ require("dotenv").config();
 
 router.post("/register",
     validateRequest([
-        body("username").isLength({ min: 3, max: 30 }).escape(),
+        body("username").isLength({ min: 3, max: 30 }).trim().escape(),
         body("email").isEmail().normalizeEmail(),
         body("password").isLength({ min: 4 }).escape()
     ]),
@@ -63,7 +63,7 @@ router.post("/refresh-token", async (req, res) => {
         res.cookie("fingerprint", newFingerprint, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" });
         res.json({ access_token: accessToken, refresh_token: newRefreshToken });
     } catch (error) {
-        res.status(403).json({ error });
+        res.status(403).json({ error: "Invalid refresh token or fingerprint" });
     }
 });
 
