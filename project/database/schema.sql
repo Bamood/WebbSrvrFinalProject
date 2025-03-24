@@ -1,6 +1,6 @@
 CREATE TABLE users (
     username VARCHAR(30) NOT NULL UNIQUE PRIMARY KEY,
-    email VARCHAR(255) NOT NULL CHECK (email LIKE '%[@]%') UNIQUE,
+    email VARCHAR(255) NOT NULL CHECK (email LIKE '%@%') UNIQUE,
     password binary(97) NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

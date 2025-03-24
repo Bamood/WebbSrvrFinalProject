@@ -53,4 +53,38 @@ const refreshToken = (refreshToken, fingerprint) => {
     });
 };
 
-module.exports = { validateRequest, verifyToken, generateTokens, refreshToken };
+const csrfTokens = new Map(); // Store CSRF tokens temporarily
+
+const generateCsrfToken = (sessionId) => {
+    const csrfToken = crypto.randomBytes(32).toString("hex");
+    csrfTokens.set(sessionId, csrfToken);
+    setTimeout(() => csrfTokens.delete(sessionId), 12 * 60 * 60 * 1000); // Expire after 12 hours
+    return csrfToken;
+};
+
+const validateCsrfToken = (req, res, next) => {
+    const sessionId = req.cookies["fingerprint"];
+    const csrfToken = req.headers["x-csrf-token"];
+    if (!sessionId || !csrfToken || csrfTokens.get(sessionId) !== csrfToken) {
+        return res.status(403).json({ error: "Invalid or missing CSRF token" });
+    }
+    next();
+};
+
+const sanitizeInput = (input) => {
+    return input.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+};
+
+module.exports = { 
+    validateRequest, 
+    verifyToken, 
+    generateTokens, 
+    refreshToken, 
+    generateCsrfToken, 
+    validateCsrfToken, 
+    sanitizeInput // Export sanitizeInput
+};

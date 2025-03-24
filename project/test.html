@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
     <title>API Test</title>
 </head>
 <body>
@@ -158,22 +158,28 @@
             const username = encodeHTML(document.getElementById("loginUsername").value);
             const password = encodeHTML(document.getElementById("loginPassword").value);
 
-            const response = await fetch("http://localhost:8000/api/accounts/login", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ username, password })
-            });
+            try {
+                const response = await fetch("http://localhost:8000/api/accounts/login", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ username, password })
+                });
 
-            const data = await response.json();
-            if (response.ok) {
-                sessionStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
-                alert("Login successful!");
-            } else {
-                alert("Error: " + data.error);
+                const data = await response.json();
+                if (response.ok) {
+                    sessionStorage.setItem("access_token", data.access_token);
+                    localStorage.setItem("refresh_token", data.refresh_token);
+                    alert("Login successful!");
+                } else {
+                    console.error("Login error:", data); // Log error details
+                    alert("Error: " + data.error);
+                }
+            } catch (error) {
+                console.error("Unexpected error during login:", error); // Log unexpected errors
+                alert("An unexpected error occurred. Please try again later.");
             }
         });
 
@@ -182,8 +188,9 @@
             const title = encodeHTML(document.getElementById("postTitle").value);
             const content = encodeHTML(document.getElementById("postContent").value);
             let token = sessionStorage.getItem("access_token");
+            const csrfToken = sessionStorage.getItem("csrf_token");
 
-            if (!token) {
+            if (!token || !csrfToken) {
                 alert("You must be logged in to create a post.");
                 return;
             }
@@ -192,7 +199,8 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
+                    "Authorization": "Bearer " + token,
+                    "X-CSRF-Token": csrfToken
                 },
                 body: JSON.stringify({ title, content })
             });
@@ -205,7 +213,8 @@
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": "Bearer " + token
+                            "Authorization": "Bearer " + token,
+                            "X-CSRF-Token": csrfToken
                         },
                         body: JSON.stringify({ title, content })
                     });
@@ -349,8 +358,8 @@
 
             const data = await response.json();
             if (response.ok) {
-                document.getElementById("infoUsername").textContent = encodeHTML(data.username);
-                document.getElementById("infoEmail").textContent = encodeHTML(data.email);
+                document.getElementById("infoUsername").textContent = encodeHTML(data.username); // Encode output
+                document.getElementById("infoEmail").textContent = encodeHTML(data.email); // Encode output
                 document.getElementById("userInfo").style.display = "block";
             } else {
                 alert("Error: " + data.error);

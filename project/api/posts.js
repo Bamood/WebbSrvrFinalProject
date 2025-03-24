@@ -1,17 +1,19 @@
 const express = require("express");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken } = require("./tokenManager");
+const { validateRequest, verifyToken, validateCsrfToken, sanitizeInput } = require("./tokenManager");
 const router = express.Router();
 
 router.post("/",
     verifyToken,
+    validateCsrfToken, // Validate CSRF token
     validateRequest([
         body("title").isLength({ min: 1, max: 100 }).withMessage("Title must be between 1 and 100 characters."),
         body("content").isLength({ min: 1 }).withMessage("Content cannot be empty.")
     ]),
     (req, res) => {
-        const { title, content } = req.body;
+        const title = sanitizeInput(req.body.title);
+        const content = sanitizeInput(req.body.content);
         const { username } = req.user;
         db.query("INSERT INTO posts (user, title, content) VALUES (?, ?, ?)",
             [username, title, content], (err) => {
@@ -20,7 +22,7 @@ router.post("/",
             });
     });
 
-router.delete("/:id", verifyToken, (req, res) => {
+router.delete("/:id", verifyToken, validateCsrfToken, (req, res) => {
     const { id } = req.params;
     const { username } = req.user;
     db.query("SELECT * FROM posts WHERE id = ?", [id], (err, postResults) => {

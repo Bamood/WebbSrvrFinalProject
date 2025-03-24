@@ -2,7 +2,7 @@ const express = require("express");
 const argon2 = require("argon2");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken, generateTokens, refreshToken } = require("./tokenManager");
+const { validateRequest, verifyToken, generateTokens, refreshToken, generateCsrfToken, sanitizeInput } = require("./tokenManager");
 const router = express.Router();
 require("dotenv").config();
 
@@ -13,7 +13,10 @@ router.post("/register",
         body("password").isLength({ min: 4 }).escape()
     ]),
     async (req, res) => {
-        const { username, email, password } = req.body;
+        const username = sanitizeInput(req.body.username); // Use sanitizeInput
+        const email = sanitizeInput(req.body.email); // Use sanitizeInput
+        const password = req.body.password; // Password is hashed, no need to sanitize
+
         try {
             const hashedPassword = await argon2.hash(password);
             db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, email], (err, results) => {
@@ -34,19 +37,30 @@ router.post("/register",
 router.post("/login", async (req, res) => {
     const { username, password } = req.body;
     db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        if (results.length === 0) return res.status(400).json({ error: "Invalid username or password" });
+        if (err) {
+            console.error("Database error during login:", err); // Log database errors
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (results.length === 0) {
+            console.warn("Login failed: Invalid username or password"); // Log invalid login attempts
+            return res.status(400).json({ error: "Invalid username or password" });
+        }
 
         const user = results[0];
         try {
             const validPassword = await argon2.verify(user.password.toString(), password);
-            if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
+            if (!validPassword) {
+                console.warn("Login failed: Invalid username or password"); // Log invalid password attempts
+                return res.status(400).json({ error: "Invalid username or password" });
+            }
 
             const { accessToken, refreshToken, fingerprint } = generateTokens(user);
+            const csrfToken = generateCsrfToken(fingerprint);
             res.cookie("fingerprint", fingerprint, { httpOnly: true, secure: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" })
                 .status(200)
-                .json({ access_token: accessToken, refresh_token: refreshToken });
+                .json({ access_token: accessToken, refresh_token: refreshToken, csrf_token: csrfToken });
         } catch (error) {
+            console.error("Error during password verification or token generation:", error); // Log unexpected errors
             res.status(500).json({ error: "Internal server error" });
         }
     });

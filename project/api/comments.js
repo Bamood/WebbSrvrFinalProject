@@ -1,7 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken } = require("./tokenManager");
+const { validateRequest, verifyToken, sanitizeInput } = require("./tokenManager");
 const router = express.Router();
 
 router.post("/",
@@ -11,7 +11,8 @@ router.post("/",
         body("comment").isLength({ min: 1 }).withMessage("Comment cannot be empty.")
     ]),
     (req, res) => {
-        const { postId, comment } = req.body;
+        const postId = req.body.postId;
+        const comment = sanitizeInput(req.body.comment); // Use sanitizeInput
         const { username } = req.user;
         db.query("INSERT INTO comments (postId, user, comment) VALUES (?, ?, ?)",
             [postId, username, comment], (err) => {
