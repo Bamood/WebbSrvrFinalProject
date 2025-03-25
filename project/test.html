@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"="width=device-width, initial-scale="1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Test</title>
 </head>
 <body>
@@ -98,54 +98,47 @@
     </div>
 
     <script>
+
+        const encodeHTML = (str) => {
+            return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
+        };
+
         // Function to refresh the access token
         async function refreshToken() {
-    const refreshToken = localStorage.getItem("refresh_token");
-    const fingerprint = document.cookie.split("; ").find(row => row.startsWith("fingerprint="))?.split("=")[1];
+            const refreshToken = localStorage.getItem("refresh_token");
+            if (!refreshToken) {
+                alert("No refresh token available. Please log in again.");
+                return false;
+            }
 
-    console.log("Refreshing token with refresh token:", refreshToken); // Debugging log
-    console.log("Fingerprint from cookies:", fingerprint); // Debugging log
+            const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ refreshToken })
+            });
 
-    if (!refreshToken || !fingerprint) {
-        alert("No refresh token or fingerprint available. Please log in again.");
-        return false;
-    }
+            const data = await response.json();
+            if (response.ok) {
+                sessionStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+                return true;
+            } else {
+                alert("Failed to refresh token. Please log in again.");
+                return false;
+            }
+        }
 
-    const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
-        method: "POST",
-        credentials: "include", // Include cookies
-        headers: { 
-            "Content-Type": "application/json",
-            "X-CSRF-Token": sessionStorage.getItem("csrf_token") // Include CSRF token
-        },
-        body: JSON.stringify({ 
-            refreshToken: localStorage.getItem("refresh_token") 
-        })
-    });
-
-    const data = await response.json();
-    console.log("Refresh token response:", data); // Debugging log
-
-    if (response.ok) {
-        sessionStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-        sessionStorage.setItem("csrf_token", data.csrf_token); // Update CSRF token
-        console.log("Stored CSRF token:", sessionStorage.getItem("csrf_token")); // Debugging log
-        return true;
-    } else {
-        alert("Token refresh failed. Please log in again.");
-        sessionStorage.removeItem("csrf_token"); // Reset CSRF token
-        return false;
-    }
-}
-
-        // Function to encode HTML entities
-        function encodeHTML(str) {
-            return str.replace(/&/g, "&amp;")
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;")
-                      .replace(/"/g, "&quot;")
-                      .replace(/'/g, "&#039;");
+        // Ensure error messages in alerts are encoded
+        async function handleError(response) {
+            const data = await response.json();
+            alert("Error: " + encodeHTML(data.error || "Unknown error"));
         }
 
         document.getElementById("registerForm").addEventListener("submit", async function(event) {
@@ -156,49 +149,40 @@
 
             const response = await fetch("http://localhost:8000/api/accounts/register", {
                 method: "POST",
-                credentials: "include", // Include cookies
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ username, email, password })
             });
 
-            const data = await response.json();
-            alert(response.ok ? "User registered successfully!" : "Error: " + data.error);
+            if (response.ok) {
+                alert("User registered successfully!");
+            } else {
+                await handleError(response);
+            }
         });
 
         document.getElementById("loginForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const username = document.getElementById("loginUsername").value; // Temporarily bypass encodeHTML
-            const password = document.getElementById("loginPassword").value; // Temporarily bypass encodeHTML
+            const username = encodeHTML(document.getElementById("loginUsername").value);
+            const password = encodeHTML(document.getElementById("loginPassword").value);
 
-            console.log("Login payload:", { username, password }); // Log the payload for debugging
+            const response = await fetch("http://localhost:8000/api/accounts/login", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, password })
+            });
 
-            try {
-                const response = await fetch("http://localhost:8000/api/accounts/login", {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-                console.log("Server response:", data); // Log the full server response
-
-                if (response.ok) {
-                    sessionStorage.setItem("access_token", data.access_token);
-                    localStorage.setItem("refresh_token", data.refresh_token);
-                    sessionStorage.setItem("csrf_token", data.csrf_token); // Store CSRF token
-                    alert("Login successful!");
-                } else {
-                    console.error("Login error:", data); // Log error details
-                    alert("Error: " + data.error);
-                }
-            } catch (error) {
-                console.error("Unexpected error during login:", error); // Log unexpected errors
-                alert("An unexpected error occurred. Please try again later.");
+            const data = await response.json();
+            if (response.ok) {
+                sessionStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+                alert("Login successful!");
+            } else {
+                await handleError(response);
             }
         });
 
@@ -207,42 +191,30 @@
             const title = encodeHTML(document.getElementById("postTitle").value);
             const content = encodeHTML(document.getElementById("postContent").value);
             let token = sessionStorage.getItem("access_token");
-            const csrfToken = sessionStorage.getItem("csrf_token"); // Retrieve CSRF token
 
-            console.log("CSRF token retrieved:", csrfToken); // Debugging log
-            console.log("Access token retrieved:", token); // Debugging log
-
-            if (!token || !csrfToken) {
+            if (!token) {
                 alert("You must be logged in to create a post.");
                 return;
             }
 
             let response = await fetch("http://localhost:8000/api/posts", {
                 method: "POST",
-                credentials: "include", // Include cookies
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token,
-                    "X-CSRF-Token": csrfToken // Include CSRF token
+                    "Authorization": "Bearer " + token
                 },
                 body: JSON.stringify({ title, content })
             });
 
             if (response.status === 401 || response.status === 403) {
-                console.error("CSRF validation failed. Refreshing token..."); // Debugging log
                 const refreshed = await refreshToken();
                 if (refreshed) {
                     token = sessionStorage.getItem("access_token");
-                    console.log("New access token after refresh:", token); // Debugging log
-                    const newCsrfToken = sessionStorage.getItem("csrf_token");
-                    console.log("New CSRF token after refresh:", newCsrfToken); // Debugging log
                     response = await fetch("http://localhost:8000/api/posts", {
                         method: "POST",
-                        credentials: "include", // Include cookies
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": "Bearer " + token,
-                            "X-CSRF-Token": newCsrfToken // Include CSRF token
+                            "Authorization": "Bearer " + token
                         },
                         body: JSON.stringify({ title, content })
                     });
@@ -250,8 +222,7 @@
             }
 
             const data = await response.json();
-            console.log("Server response:", data); // Debugging log
-            alert(response.ok ? "Post created successfully!" : "Error: " + data.error);
+            alert(response.ok ? "Post created successfully!" : "Error: " + encodeHTML(data.error));
         });
 
         document.getElementById("deleteForm").addEventListener("submit", async function(event) {
@@ -260,14 +231,13 @@
 
             const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
                 method: "DELETE",
-                credentials: "include", // Include cookies
                 headers: {
                     "Authorization": "Bearer " + sessionStorage.getItem("access_token")
                 }
             });
 
             const data = await response.json();
-            alert(response.ok ? "Post deleted successfully!" : "Error: " + data.error);
+            alert(response.ok ? "Post deleted successfully!" : "Error: " + encodeHTML(data.error));
         });
 
         document.getElementById("deleteUserForm").addEventListener("submit", async function(event) {
@@ -281,7 +251,6 @@
 
             const response = await fetch("http://localhost:8000/api/accounts/delete", {
                 method: "DELETE",
-                credentials: "include", // Include cookies
                 headers: {
                     "Authorization": "Bearer " + token
                 }
@@ -293,7 +262,7 @@
                 localStorage.removeItem("refresh_token");
                 alert("User deleted successfully!");
             } else {
-                alert("Error: " + data.error);
+                await handleError(response);
             }
         });
 
@@ -302,31 +271,23 @@
             const postId = encodeHTML(document.getElementById("commentPostId").value);
             const comment = encodeHTML(document.getElementById("commentContent").value);
             const token = sessionStorage.getItem("access_token");
-            const csrfToken = sessionStorage.getItem("csrf_token"); // Retrieve CSRF token
 
-            console.log("Creating comment for post ID:", postId, "comment:", comment); // Debugging log
-            console.log("Access token:", token); // Debugging log
-            console.log("CSRF token:", csrfToken); // Debugging log
-
-            if (!token || !csrfToken) {
+            if (!token) {
                 alert("You must be logged in to create a comment.");
                 return;
             }
 
             const response = await fetch("http://localhost:8000/api/comments", {
                 method: "POST",
-                credentials: "include", // Include cookies
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token,
-                    "X-CSRF-Token": csrfToken // Include CSRF token
+                    "Authorization": "Bearer " + token
                 },
                 body: JSON.stringify({ postId, comment })
             });
 
             const data = await response.json();
-            console.log("Server response:", data); // Debugging log
-            alert(response.ok ? "Comment created successfully!" : "Error: " + data.error);
+            alert(response.ok ? "Comment created successfully!" : "Error: " + encodeHTML(data.error));
         });
 
         document.getElementById("deleteCommentForm").addEventListener("submit", async function(event) {
@@ -335,14 +296,13 @@
 
             const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
                 method: "DELETE",
-                credentials: "include", // Include cookies
                 headers: {
                     "Authorization": "Bearer " + sessionStorage.getItem("access_token")
                 }
             });
 
             const data = await response.json();
-            alert(response.ok ? "Comment deleted successfully!" : "Error: " + data.error);
+            alert(response.ok ? "Comment deleted successfully!" : "Error: " + encodeHTML(data.error));
         });
 
         document.getElementById("changePasswordForm").addEventListener("submit", async function(event) {
@@ -358,7 +318,6 @@
 
             const response = await fetch("http://localhost:8000/api/accounts/change-password", {
                 method: "PUT",
-                credentials: "include", // Include cookies
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": "Bearer " + token
@@ -367,7 +326,7 @@
             });
 
             const data = await response.json();
-            alert(response.ok ? "Password changed successfully!" : "Error: " + data.error);
+            alert(response.ok ? "Password changed successfully!" : "Error: " + encodeHTML(data.error));
         });
 
         document.getElementById("logoutButton").addEventListener("click", function() {
@@ -379,7 +338,6 @@
 
             sessionStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
-            sessionStorage.removeItem("csrf_token"); // Remove CSRF token
             alert("Logged out successfully!");
         });
 
@@ -393,7 +351,6 @@
 
             const response = await fetch("http://localhost:8000/api/accounts/info", {
                 method: "GET",
-                credentials: "include", // Include cookies
                 headers: {
                     "Authorization": "Bearer " + token
                 }
@@ -401,11 +358,11 @@
 
             const data = await response.json();
             if (response.ok) {
-                document.getElementById("infoUsername").textContent = encodeHTML(data.username); // Encode output
-                document.getElementById("infoEmail").textContent = encodeHTML(data.email); // Encode output
+                document.getElementById("infoUsername").textContent = encodeHTML(data.username);
+                document.getElementById("infoEmail").textContent = encodeHTML(data.email);
                 document.getElementById("userInfo").style.display = "block";
             } else {
-                alert("Error: " + data.error);
+                alert("Error: " + encodeHTML(data.error));
             }
         });
     </script>

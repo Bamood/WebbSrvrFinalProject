@@ -2,7 +2,7 @@ const express = require("express");
 const argon2 = require("argon2");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken, generateTokens, refreshToken, generateCsrfToken, sanitizeInput } = require("./tokenManager");
+const { validateRequest, verifyToken, generateTokens, refreshToken, encodeHTML } = require("./tokenManager");
 const router = express.Router();
 require("dotenv").config();
 
@@ -13,18 +13,17 @@ router.post("/register",
         body("password").isLength({ min: 4 }).escape()
     ]),
     async (req, res) => {
-        const username = sanitizeInput(req.body.username); // Use sanitizeInput
-        const email = sanitizeInput(req.body.email); // Use sanitizeInput
-        const password = req.body.password; // Password is hashed, no need to sanitize
-
+        const { username, email, password } = req.body;
+        const sanitizedUsername = encodeHTML(username);
+        const sanitizedEmail = encodeHTML(email);
         try {
             const hashedPassword = await argon2.hash(password);
-            db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, email], (err, results) => {
+            db.query("SELECT * FROM users WHERE username = ? OR email = ?", [sanitizedUsername, sanitizedEmail], (err, results) => {
                 if (err) return res.status(500).json({ error: "Database error" });
                 if (results.length > 0) return res.status(400).json({ error: "Username or email already exists" });
 
                 db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-                    [username, email, hashedPassword], (err) => {
+                    [sanitizedUsername, sanitizedEmail, hashedPassword], (err) => {
                         if (err) return res.status(500).json({ error: "Database error" });
                         res.status(201).json({ message: "User registered successfully" });
                     });
@@ -37,42 +36,19 @@ router.post("/register",
 router.post("/login", async (req, res) => {
     const { username, password } = req.body;
     db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
-        if (err) {
-            console.error("Database error during login:", err); // Log database errors
-            return res.status(500).json({ error: "Database error" });
-        }
-        if (results.length === 0) {
-            console.warn("Login failed: Invalid username or password"); // Log invalid login attempts
-            return res.status(400).json({ error: "Invalid username or password" });
-        }
+        if (err) return res.status(500).json({ error: "Database error" });
+        if (results.length === 0) return res.status(400).json({ error: "Invalid username or password" });
 
         const user = results[0];
         try {
             const validPassword = await argon2.verify(user.password.toString(), password);
-            if (!validPassword) {
-                console.warn("Login failed: Invalid username or password"); // Log invalid password attempts
-                return res.status(400).json({ error: "Invalid username or password" });
-            }
+            if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
 
             const { accessToken, refreshToken, fingerprint } = generateTokens(user);
-            const csrfToken = generateCsrfToken(fingerprint);
-
-            res.cookie("fingerprint", fingerprint, {
-                httpOnly: true, // Secure cookie
-                path: "/",
-                maxAge: 12 * 60 * 60 * 1000, // 12 hours
-                sameSite: "Lax" // Better compatibility
-            });
-
-            res.status(200).json({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-                csrf_token: csrfToken
-            });
-
-            
+            res.cookie("fingerprint", fingerprint, { httpOnly: true, secure: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" })
+                .status(200)
+                .json({ access_token: accessToken, refresh_token: refreshToken });
         } catch (error) {
-            console.error("Error during password verification or token generation:", error); // Log unexpected errors
             res.status(500).json({ error: "Internal server error" });
         }
     });
@@ -80,26 +56,16 @@ router.post("/login", async (req, res) => {
 
 router.post("/refresh-token", async (req, res) => {
     const { refreshToken: token } = req.body;
-    const fingerprint = req.cookies["fingerprint"]; // Now accessible
+    const fingerprint = req.cookies["fingerprint"];
+    if (!token) return res.status(401).json({ error: "No refresh token provided" });
+    if (!fingerprint) return res.status(401).json({ error: "No fingerprint provided" });
 
     try {
         const { accessToken, newRefreshToken, newFingerprint } = await refreshToken(token, fingerprint);
-        const csrfToken = generateCsrfToken(newFingerprint); // Generate new CSRF token
-
-        res.cookie("fingerprint", newFingerprint, {
-            httpOnly: false, // Allow client-side access
-            sameSite: "None",
-            path: "/",
-            maxAge: 12 * 60 * 60 * 1000, // 12 hours
-        });
-
-        res.json({
-            access_token: accessToken,
-            refresh_token: newRefreshToken,
-            csrf_token: csrfToken // Send new CSRF token
-        });
+        res.cookie("fingerprint", newFingerprint, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" });
+        res.json({ access_token: accessToken, refresh_token: newRefreshToken });
     } catch (error) {
-        res.status(403).json({ error: "Invalid refresh token" });
+        res.status(403).json({ error: "Invalid refresh token or fingerprint" });
     }
 });
 
@@ -118,8 +84,8 @@ router.delete("/delete", verifyToken, (req, res) => {
 router.put("/change-password",
     verifyToken,
     validateRequest([
-        body("currentPassword").isLength({ min: 4 }),
-        body("newPassword").isLength({ min: 4 })
+        body("currentPassword").isLength({ min: 4 }).escape(),
+        body("newPassword").isLength({ min: 4 }).escape()
     ]),
     async (req, res) => {
         const { currentPassword, newPassword } = req.body;
@@ -153,7 +119,10 @@ router.get("/info", verifyToken, (req, res) => {
         if (results.length === 0) return res.status(404).json({ error: "User not found" });
 
         const user = results[0];
-        res.json({ username: user.username, email: user.email });
+        res.json({
+            username: encodeHTML(user.username),
+            email: encodeHTML(user.email)
+        });
     });
 });
 

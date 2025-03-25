@@ -53,43 +53,13 @@ const refreshToken = (refreshToken, fingerprint) => {
     });
 };
 
-const csrfTokens = new Map(); // Store CSRF tokens temporarily
-
-const generateCsrfToken = (sessionId) => {
-    const csrfToken = crypto.randomBytes(32).toString("hex");
-    csrfTokens.set(sessionId, csrfToken);
-    setTimeout(() => csrfTokens.delete(sessionId), 12 * 60 * 60 * 1000); // Expire after 12 hours
-    return csrfToken;
+// Utility function to encode HTML entities
+const encodeHTML = (str) => {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
 };
 
-const validateCsrfToken = (req, res, next) => {
-    const sessionId = req.cookies["fingerprint"];
-    const csrfToken = req.headers["x-csrf-token"];
-
-    console.log("Validating CSRF token:", csrfToken); // Debugging log
-    console.log("Session ID (fingerprint):", sessionId); // Debugging log
-
-    if (!sessionId || !csrfToken || csrfTokens.get(sessionId) !== csrfToken) {
-        console.error("Invalid or missing CSRF token"); // Debugging log
-        return res.status(403).json({ error: "Invalid or missing CSRF token" });
-    }
-    next();
-};
-
-const sanitizeInput = (input) => {
-    return input.replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-};
-
-module.exports = { 
-    validateRequest, 
-    verifyToken, 
-    generateTokens, 
-    refreshToken, 
-    generateCsrfToken, 
-    validateCsrfToken, 
-    sanitizeInput // Export sanitizeInput
-};
+module.exports = { validateRequest, verifyToken, generateTokens, refreshToken, encodeHTML };
