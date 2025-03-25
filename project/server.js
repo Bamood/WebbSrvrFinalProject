@@ -24,9 +24,7 @@ app.use((req, res, next) => {
         "style-src 'self'; " +
         "img-src 'self'; " +
         "connect-src 'self'; " +
-        "frame-ancestors 'none'; " +
-        "base-uri 'self'; " +
-        "form-action 'self';");
+        "frame-ancestors 'none';");
     next();
 });
 

@@ -182,7 +182,7 @@
                 localStorage.setItem("refresh_token", data.refresh_token);
                 alert("Login successful!");
             } else {
-                await handleError(response);
+                alert("Error: " + encodeHTML(data.error)); // Display error message for wrong password
             }
         });
 
@@ -326,7 +326,14 @@
             });
 
             const data = await response.json();
-            alert(response.ok ? "Password changed successfully!" : "Error: " + encodeHTML(data.error));
+            if (response.ok) {
+                // Clear tokens from storage
+                sessionStorage.removeItem("access_token");
+                localStorage.removeItem("refresh_token");
+                alert("Password changed successfully. You have been logged out. Please log in again.");
+            } else {
+                alert("Error: " + encodeHTML(data.error));
+            }
         });
 
         document.getElementById("logoutButton").addEventListener("click", function() {
@@ -358,9 +365,7 @@
 
             const data = await response.json();
             if (response.ok) {
-                document.getElementById("infoUsername").textContent = encodeHTML(data.username);
-                document.getElementById("infoEmail").textContent = encodeHTML(data.email);
-                document.getElementById("userInfo").style.display = "block";
+                alert(`Username: ${encodeHTML(data.username)}\nEmail: ${encodeHTML(data.email)}`);
             } else {
                 alert("Error: " + encodeHTML(data.error));
             }
