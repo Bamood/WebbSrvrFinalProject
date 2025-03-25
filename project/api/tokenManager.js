@@ -65,7 +65,12 @@ const generateCsrfToken = (sessionId) => {
 const validateCsrfToken = (req, res, next) => {
     const sessionId = req.cookies["fingerprint"];
     const csrfToken = req.headers["x-csrf-token"];
+
+    console.log("Validating CSRF token:", csrfToken); // Debugging log
+    console.log("Session ID (fingerprint):", sessionId); // Debugging log
+
     if (!sessionId || !csrfToken || csrfTokens.get(sessionId) !== csrfToken) {
+        console.error("Invalid or missing CSRF token"); // Debugging log
         return res.status(403).json({ error: "Invalid or missing CSRF token" });
     }
     next();

@@ -56,9 +56,21 @@ router.post("/login", async (req, res) => {
 
             const { accessToken, refreshToken, fingerprint } = generateTokens(user);
             const csrfToken = generateCsrfToken(fingerprint);
-            res.cookie("fingerprint", fingerprint, { httpOnly: true, secure: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" })
-                .status(200)
-                .json({ access_token: accessToken, refresh_token: refreshToken, csrf_token: csrfToken });
+
+            res.cookie("fingerprint", fingerprint, {
+                httpOnly: true, // Secure cookie
+                path: "/",
+                maxAge: 12 * 60 * 60 * 1000, // 12 hours
+                sameSite: "Lax" // Better compatibility
+            });
+
+            res.status(200).json({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+                csrf_token: csrfToken
+            });
+
+            
         } catch (error) {
             console.error("Error during password verification or token generation:", error); // Log unexpected errors
             res.status(500).json({ error: "Internal server error" });
@@ -68,16 +80,26 @@ router.post("/login", async (req, res) => {
 
 router.post("/refresh-token", async (req, res) => {
     const { refreshToken: token } = req.body;
-    const fingerprint = req.cookies["fingerprint"];
-    if (!token) return res.status(401).json({ error: "No refresh token provided" });
-    if (!fingerprint) return res.status(401).json({ error: "No fingerprint provided" });
+    const fingerprint = req.cookies["fingerprint"]; // Now accessible
 
     try {
         const { accessToken, newRefreshToken, newFingerprint } = await refreshToken(token, fingerprint);
-        res.cookie("fingerprint", newFingerprint, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" });
-        res.json({ access_token: accessToken, refresh_token: newRefreshToken });
+        const csrfToken = generateCsrfToken(newFingerprint); // Generate new CSRF token
+
+        res.cookie("fingerprint", newFingerprint, {
+            httpOnly: false, // Allow client-side access
+            sameSite: "None",
+            path: "/",
+            maxAge: 12 * 60 * 60 * 1000, // 12 hours
+        });
+
+        res.json({
+            access_token: accessToken,
+            refresh_token: newRefreshToken,
+            csrf_token: csrfToken // Send new CSRF token
+        });
     } catch (error) {
-        res.status(403).json({ error: "Invalid refresh token or fingerprint" });
+        res.status(403).json({ error: "Invalid refresh token" });
     }
 });
 
