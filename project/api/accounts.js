@@ -54,19 +54,17 @@ router.post("/login", async (req, res) => {
     });
 });
 
-router.post("/refresh-token", async (req, res) => {
-    const { refreshToken: token } = req.body;
-    const fingerprint = req.cookies["fingerprint"];
-    if (!token) return res.status(401).json({ error: "No refresh token provided" });
-    if (!fingerprint) return res.status(401).json({ error: "No fingerprint provided" });
+router.post("/refresh-token", (req, res) => {
+    const { refreshToken } = req.body;
 
-    try {
-        const { accessToken, newRefreshToken, newFingerprint } = await refreshToken(token, fingerprint);
-        res.cookie("fingerprint", newFingerprint, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" });
-        res.json({ access_token: accessToken, refresh_token: newRefreshToken });
-    } catch (error) {
-        res.status(403).json({ error: "Invalid refresh token or fingerprint" });
+    // Validate the refresh token
+    if (!refreshToken || refreshToken !== "expected_refresh_token") {
+        return res.status(401).json({ error: "Invalid refresh token" });
     }
+
+    // Issue a new access token
+    const newAccessToken = "new_access_token"; // Replace with actual token generation logic
+    res.json({ access_token: newAccessToken });
 });
 
 router.delete("/delete", verifyToken, (req, res) => {

@@ -1,0 +1,161 @@
+/* General styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+    line-height: 1.6;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #444;
+}
+
+form {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#logoutButton,
+#showInfoButton {
+    max-width: 400px;
+    margin: 10px auto;
+    display: block;
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#logoutButton:hover,
+#showInfoButton:hover {
+    background-color: #218838;
+}
+
+#userInfo {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#registerRedirectButton {
+    display: block;
+    margin: 10px auto;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+}
+
+#registerRedirectButton:hover {
+    background-color: #5a6268;
+}
+
+#deleteUserButton {
+    max-width: 400px;
+    margin: 10px auto;
+    display: block;
+    padding: 10px;
+    background-color: #dc3545; /* Red color for delete action */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#deleteUserButton:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+#accManagementButton {
+    max-width: 400px;
+    margin: 10px auto;
+    display: block;
+    padding: 10px;
+    background-color: #17a2b8; /* Blue-green color for account management */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#accManagementButton:hover {
+    background-color: #138496; /* Darker blue-green on hover */
+}
+
+.row-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.form-container {
+    flex: 1 1 45%; /* Reduce width to make islands smaller */
+    max-width: 500px; /* Set a maximum width for each island */
+    margin: 15px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 15px; /* Reduce padding to make the islands more compact */
+    box-sizing: border-box;
+}

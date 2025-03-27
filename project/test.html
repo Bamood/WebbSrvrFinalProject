@@ -4,372 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Test</title>
+    <link rel="stylesheet" href="test.css">
 </head>
 <body>
+    <h1 id="welcomeMessage">Welcome</h1>
     <h1>API Test</h1>
 
-    <h2>Register User</h2>
-    <form id="registerForm">
-        <label for="regUsername">Username:</label>
-        <input type="text" id="regUsername" required>
-        <br>
-        <label for="regEmail">Email:</label>
-        <input type="email" id="regEmail" required>
-        <br>
-        <label for="regPassword">Password:</label>
-        <input type="password" id="regPassword" required>
-        <br>
-        <button type="submit">Register</button>
-    </form>
+    <div class="row-container">
+        <div class="form-container">
+            <h2>Create Post</h2>
+            <form id="postForm">
+                <label for="postTitle">Title:</label>
+                <input type="text" id="postTitle" required>
+                <br>
+                <label for="postContent">Content:</label>
+                <textarea id="postContent" required></textarea>
+                <br>
+                <button type="submit">Create Post</button>
+            </form>
+        </div>
 
-    <h2>Login</h2>
-    <form id="loginForm">
-        <label for="loginUsername">Username:</label>
-        <input type="text" id="loginUsername" required>
-        <br>
-        <label for="loginPassword">Password:</label>
-        <input type="password" id="loginPassword" required>
-        <br>
-        <button type="submit">Login</button>
-    </form>
+        <div class="form-container">
+            <h2>Delete Post</h2>
+            <form id="deleteForm">
+                <label for="deletePostId">Post ID:</label>
+                <input type="text" id="deletePostId" required>
+                <br>
+                <button type="submit">Delete Post</button>
+            </form>
+        </div>
 
-    <h2>Create Post</h2>
-    <form id="postForm">
-        <label for="postTitle">Title:</label>
-        <input type="text" id="postTitle" required>
-        <br>
-        <label for="postContent">Content:</label>
-        <textarea id="postContent" required></textarea>
-        <br>
-        <button type="submit">Create Post</button>
-    </form>
+        <div class="form-container">
+            <h2>Create Comment</h2>
+            <form id="commentForm">
+                <label for="commentPostId">Post ID:</label>
+                <input type="text" id="commentPostId" required>
+                <br>
+                <label for="commentContent">Comment:</label>
+                <textarea id="commentContent" required></textarea>
+                <br>
+                <button type="submit">Create Comment</button>
+            </form>
+        </div>
 
-    <h2>Delete Post</h2>
-    <form id="deleteForm">
-        <label for="deletePostId">Post ID:</label>
-        <input type="text" id="deletePostId" required>
-        <br>
-        <button type="submit">Delete Post</button>
-    </form>
-
-    <h2>Delete User</h2>
-    <form id="deleteUserForm">
-        <button type="submit">Delete User</button>
-    </form>
-
-    <h2>Create Comment</h2>
-    <form id="commentForm">
-        <label for="commentPostId">Post ID:</label>
-        <input type="text" id="commentPostId" required>
-        <br>
-        <label for="commentContent">Comment:</label>
-        <textarea id="commentContent" required></textarea>
-        <br>
-        <button type="submit">Create Comment</button>
-    </form>
-
-    <h2>Delete Comment</h2>
-    <form id="deleteCommentForm">
-        <label for="deleteCommentId">Comment ID:</label>
-        <input type="text" id="deleteCommentId" required>
-        <br>
-        <button type="submit">Delete Comment</button>
-    </form>
-
-    <h2>Change Password</h2>
-    <form id="changePasswordForm">
-        <label for="currentPassword">Current Password:</label>
-        <input type="password" id="currentPassword" required>
-        <br>
-        <label for="newPassword">New Password:</label>
-        <input type="password" id="newPassword" required>
-        <br>
-        <button type="submit">Change Password</button>
-    </form>
-
+        <div class="form-container">
+            <h2>Delete Comment</h2>
+            <form id="deleteCommentForm">
+                <label for="deleteCommentId">Comment ID:</label>
+                <input type="text" id="deleteCommentId" required>
+                <br>
+                <button type="submit">Delete Comment</button>
+            </form>
+        </div>
+    </div>
+    
     <h2>Logout</h2>
     <button id="logoutButton">Logout</button>
 
-    <h2>Show Information</h2>
-    <button id="showInfoButton">Show Information</button>
-    <div id="userInfo" style="display: none;">
-        <p>Username: <span id="infoUsername"></span></p>
-        <p>Email: <span id="infoEmail"></span></p>
-    </div>
-
+    <h2>Account Management</h2>
+    <button id="accManagementButton" onclick="window.location.href='accManagement.html'">Manage Account</button>
+    
     <script>
-
-        const encodeHTML = (str) => {
-            return str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;");
-        };
-
-        // Function to refresh the access token
-        async function refreshToken() {
-            const refreshToken = localStorage.getItem("refresh_token");
-            if (!refreshToken) {
-                alert("No refresh token available. Please log in again.");
-                return false;
-            }
-
-            const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ refreshToken })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                sessionStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
-                return true;
-            } else {
-                alert("Failed to refresh token. Please log in again.");
-                return false;
-            }
-        }
-
-        // Ensure error messages in alerts are encoded
-        async function handleError(response) {
-            const data = await response.json();
-            alert("Error: " + encodeHTML(data.error || "Unknown error"));
-        }
-
-        document.getElementById("registerForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const username = encodeHTML(document.getElementById("regUsername").value);
-            const email = encodeHTML(document.getElementById("regEmail").value);
-            const password = encodeHTML(document.getElementById("regPassword").value);
-
-            const response = await fetch("http://localhost:8000/api/accounts/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ username, email, password })
-            });
-
-            if (response.ok) {
-                alert("User registered successfully!");
-            } else {
-                await handleError(response);
+        // Display a welcome message with the user's name
+        document.addEventListener("DOMContentLoaded", () => {
+            const accessToken = sessionStorage.getItem("access_token");
+            if (accessToken) {
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                const username = payload.username;
+                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
             }
         });
 
-        document.getElementById("loginForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const username = encodeHTML(document.getElementById("loginUsername").value);
-            const password = encodeHTML(document.getElementById("loginPassword").value);
-
-            const response = await fetch("http://localhost:8000/api/accounts/login", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                sessionStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
-                alert("Login successful!");
-            } else {
-                alert("Error: " + encodeHTML(data.error)); // Display error message for wrong password
-            }
-        });
-
-        document.getElementById("postForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const title = encodeHTML(document.getElementById("postTitle").value);
-            const content = encodeHTML(document.getElementById("postContent").value);
-            let token = sessionStorage.getItem("access_token");
-
-            if (!token) {
-                alert("You must be logged in to create a post.");
-                return;
-            }
-
-            let response = await fetch("http://localhost:8000/api/posts", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
-                },
-                body: JSON.stringify({ title, content })
-            });
-
-            if (response.status === 401 || response.status === 403) {
-                const refreshed = await refreshToken();
-                if (refreshed) {
-                    token = sessionStorage.getItem("access_token");
-                    response = await fetch("http://localhost:8000/api/posts", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer " + token
-                        },
-                        body: JSON.stringify({ title, content })
-                    });
-                }
-            }
-
-            const data = await response.json();
-            alert(response.ok ? "Post created successfully!" : "Error: " + encodeHTML(data.error));
-        });
-
-        document.getElementById("deleteForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const postId = encodeHTML(document.getElementById("deletePostId").value);
-
-            const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": "Bearer " + sessionStorage.getItem("access_token")
-                }
-            });
-
-            const data = await response.json();
-            alert(response.ok ? "Post deleted successfully!" : "Error: " + encodeHTML(data.error));
-        });
-
-        document.getElementById("deleteUserForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const token = sessionStorage.getItem("access_token");
-
-            if (!token) {
-                alert("You must be logged in to delete your account.");
-                return;
-            }
-
-            const response = await fetch("http://localhost:8000/api/accounts/delete", {
-                method: "DELETE",
-                headers: {
-                    "Authorization": "Bearer " + token
-                }
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                sessionStorage.removeItem("access_token");
-                localStorage.removeItem("refresh_token");
-                alert("User deleted successfully!");
-            } else {
-                await handleError(response);
-            }
-        });
-
-        document.getElementById("commentForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const postId = encodeHTML(document.getElementById("commentPostId").value);
-            const comment = encodeHTML(document.getElementById("commentContent").value);
-            const token = sessionStorage.getItem("access_token");
-
-            if (!token) {
-                alert("You must be logged in to create a comment.");
-                return;
-            }
-
-            const response = await fetch("http://localhost:8000/api/comments", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
-                },
-                body: JSON.stringify({ postId, comment })
-            });
-
-            const data = await response.json();
-            alert(response.ok ? "Comment created successfully!" : "Error: " + encodeHTML(data.error));
-        });
-
-        document.getElementById("deleteCommentForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const commentId = encodeHTML(document.getElementById("deleteCommentId").value);
-
-            const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": "Bearer " + sessionStorage.getItem("access_token")
-                }
-            });
-
-            const data = await response.json();
-            alert(response.ok ? "Comment deleted successfully!" : "Error: " + encodeHTML(data.error));
-        });
-
-        document.getElementById("changePasswordForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const currentPassword = encodeHTML(document.getElementById("currentPassword").value);
-            const newPassword = encodeHTML(document.getElementById("newPassword").value);
-            const token = sessionStorage.getItem("access_token");
-
-            if (!token) {
-                alert("You must be logged in to change your password.");
-                return;
-            }
-
-            const response = await fetch("http://localhost:8000/api/accounts/change-password", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
-                },
-                body: JSON.stringify({ currentPassword, newPassword })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                // Clear tokens from storage
-                sessionStorage.removeItem("access_token");
-                localStorage.removeItem("refresh_token");
-                alert("Password changed successfully. You have been logged out. Please log in again.");
-            } else {
-                alert("Error: " + encodeHTML(data.error));
-            }
-        });
-
-        document.getElementById("logoutButton").addEventListener("click", function() {
-            const token = sessionStorage.getItem("access_token");
-            if (!token) {
-                alert("You are not logged in.");
-                return;
-            }
-
-            sessionStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            alert("Logged out successfully!");
-        });
-
-        document.getElementById("showInfoButton").addEventListener("click", async function() {
-            const token = sessionStorage.getItem("access_token");
-
-            if (!token) {
-                alert("You must be logged in to view your information.");
-                return;
-            }
-
-            const response = await fetch("http://localhost:8000/api/accounts/info", {
-                method: "GET",
-                headers: {
-                    "Authorization": "Bearer " + token
-                }
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                alert(`Username: ${encodeHTML(data.username)}\nEmail: ${encodeHTML(data.email)}`);
-            } else {
-                alert("Error: " + encodeHTML(data.error));
+        // Redirect to landing.html if the user is not logged in
+        document.addEventListener("DOMContentLoaded", () => {
+            const accessToken = sessionStorage.getItem("access_token");
+            if (!accessToken) {
+                // Redirect to the login page if no access token is found
+                window.location.href = "landing.html";
             }
         });
     </script>
+  
+    <script src="test.js"></script>
 </body>
 </html>
