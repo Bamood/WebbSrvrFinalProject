@@ -13,12 +13,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return JSON.parse(atob(payload));
     };
 
+    // Function to check if the token is expired
+    const isTokenExpired = (token) => {
+        const payload = decodeJWT(token);
+        return payload.exp * 1000 <= Date.now(); // Check if the expiration time has passed
+    };
+
     // Function to refresh the access token
     async function refreshToken() {
         const refreshToken = localStorage.getItem("refresh_token");
+        console.log("Refresh token accessed in refreshToken:", refreshToken); // Debugging log
         if (!refreshToken) {
             alert("No refresh token available. Please log in again.");
-            window.location.href = "landing.html"; // Redirect to login
+            window.location.href = "login.html"; // Redirect to login
             return false;
         }
 
@@ -31,17 +38,43 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify({ refreshToken })
         });
 
+        console.log("Refresh token response status:", response.status); // Debugging log
         const data = await response.json();
+        console.log("Refresh token response data:", data); // Debugging log
+
         if (response.ok) {
             sessionStorage.setItem("access_token", data.access_token); // Update the access token
-            localStorage.setItem("refresh_token", data.refresh_token); // Update the refresh token
+            console.log("Access token refreshed:", sessionStorage.getItem("access_token")); // Debugging log
             return true;
         } else {
             alert("Failed to refresh token. Please log in again.");
-            window.location.href = "landing.html"; // Redirect to login
+            window.location.href = "login.html"; // Redirect to login
             return false;
         }
     }
+
+    // Automatically refresh the access token before expiration
+    function startAccessTokenRefreshTimer() {
+        const token = sessionStorage.getItem("access_token");
+        if (!token) return;
+
+        const payload = decodeJWT(token);
+        const expirationTime = payload.exp * 1000; // Convert to milliseconds
+        const refreshTime = expirationTime - Date.now() - 60000; // Refresh 1 minute before expiration
+
+        if (refreshTime > 0) {
+            setTimeout(async () => {
+                console.log("Refreshing access token before expiration...");
+                const refreshed = await refreshToken();
+                if (refreshed) {
+                    startAccessTokenRefreshTimer(); // Restart the timer with the new token
+                }
+            }, refreshTime);
+        }
+    }
+
+    // Start the access token refresh timer on page load
+    startAccessTokenRefreshTimer();
 
     // Ensure error messages in alerts are encoded
     async function handleError(response) {
@@ -65,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
             alert("User registered successfully! Redirecting to login page...");
-            window.location.href = "landing.html"; // Redirect to the login page
+            window.location.href = "login.html"; // Redirect to the login page
         } else {
             await handleError(response);
         }
@@ -104,8 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const content = encodeHTML(document.getElementById("postContent").value);
         let token = sessionStorage.getItem("access_token");
 
-        if (!token) {
-            alert("You must be logged in to create a post.");
+        if (!token || isTokenExpired(token)) {
+            alert("Your session has expired. Please log in again.");
+            window.location.href = "login.html";
             return;
         }
 
@@ -140,11 +174,18 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("deleteForm")?.addEventListener("submit", async function (event) {
         event.preventDefault();
         const postId = encodeHTML(document.getElementById("deletePostId").value);
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token || isTokenExpired(token)) {
+            alert("Your session has expired. Please log in again.");
+            window.location.href = "login.html";
+            return;
+        }
 
         const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
             method: "DELETE",
             headers: {
-                "Authorization": "Bearer " + sessionStorage.getItem("access_token")
+                "Authorization": "Bearer " + token
             }
         });
 
@@ -173,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
             sessionStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
             alert("User deleted successfully!");
-            window.location.href = "landing.html";
+            window.location.href = "login.html";
         } else {
             await handleError(response);
         }
@@ -185,8 +226,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const comment = encodeHTML(document.getElementById("commentContent").value);
         const token = sessionStorage.getItem("access_token");
 
-        if (!token) {
-            alert("You must be logged in to create a comment.");
+        if (!token || isTokenExpired(token)) {
+            alert("Your session has expired. Please log in again.");
+            window.location.href = "login.html";
             return;
         }
 
@@ -206,11 +248,18 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("deleteCommentForm")?.addEventListener("submit", async function (event) {
         event.preventDefault();
         const commentId = encodeHTML(document.getElementById("deleteCommentId").value);
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token || isTokenExpired(token)) {
+            alert("Your session has expired. Please log in again.");
+            window.location.href = "login.html";
+            return;
+        }
 
         const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
             method: "DELETE",
             headers: {
-                "Authorization": "Bearer " + sessionStorage.getItem("access_token")
+                "Authorization": "Bearer " + token
             }
         });
 
@@ -224,8 +273,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const newPassword = encodeHTML(document.getElementById("newPassword").value);
         const token = sessionStorage.getItem("access_token");
 
-        if (!token) {
-            alert("You must be logged in to change your password.");
+        if (!token || isTokenExpired(token)) {
+            alert("Your session has expired. Please log in again.");
+            window.location.href = "login.html";
             return;
         }
 
@@ -243,39 +293,38 @@ document.addEventListener("DOMContentLoaded", () => {
             sessionStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
             alert("Password changed successfully. You have been logged out. Please log in again.");
-            window.location.href = "landing.html"; // Redirect to the login page
+            window.location.href = "login.html"; // Redirect to the login page
         } else {
             alert("Error: " + encodeHTML(data.error));
         }
     });
 
-    document.getElementById("logoutButton")?.addEventListener("click", function () {
-        const token = sessionStorage.getItem("access_token");
-        if (!token) {
-            alert("You are not logged in.");
-            return;
-        }
+    document.getElementById("logoutButton")?.addEventListener("click", async function () {
+        const response = await fetch("http://localhost:8000/api/accounts/logout", {
+            method: "POST",
+            credentials: "include"
+        });
 
-        sessionStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        alert("Logged out successfully!");
-        // Redirect to the landing page
-        window.location.href = "landing.html";
+        if (response.ok) {
+            sessionStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            alert("Logged out successfully!");
+            window.location.href = "login.html";
+        } else {
+            alert("Failed to log out. Please try again.");
+        }
     });
 
     document.getElementById("showInfoButton")?.addEventListener("click", async function () {
-        let token = sessionStorage.getItem("access_token");
+        const token = sessionStorage.getItem("access_token");
 
-        if (!token) {
-            alert("You must be logged in to view your information.");
+        if (!token || isTokenExpired(token)) {
+            alert("Your session has expired. Please log in again.");
+            window.location.href = "login.html";
             return;
         }
 
-        const refreshed = await refreshToken();
-        if (refreshed) {
-            token = sessionStorage.getItem("access_token");
-        }
-
+        // Fetch user information
         const response = await fetch("http://localhost:8000/api/accounts/info", {
             method: "GET",
             headers: {
@@ -285,7 +334,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const data = await response.json();
         if (response.ok) {
-            alert(`Username: ${encodeHTML(data.username)}\nEmail: ${encodeHTML(data.email)}`);
+            document.getElementById("infoUsername").textContent = encodeHTML(data.username);
+            document.getElementById("infoEmail").textContent = encodeHTML(data.email);
+            document.getElementById("userInfo").style.display = "block";
         } else {
             alert("Error: " + encodeHTML(data.error));
         }

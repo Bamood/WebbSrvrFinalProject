@@ -31,14 +31,15 @@
     <button id="deleteUserButton">Delete User</button>
 
     <h2>Back to Dashboard</h2>
-    <button onclick="window.location.href='test.html'">Back</button>
+    <button class='back' onclick="window.location.href='test.html'">Back</button>
 
     <script>
-        // Redirect to landing.html if the user is not logged in
+        // Redirect to login.html if the user is not logged in
         document.addEventListener("DOMContentLoaded", () => {
             const accessToken = sessionStorage.getItem("access_token");
+            console.log("Access token in accManagement:", accessToken); // Debugging log
             if (!accessToken) {
-                window.location.href = "landing.html"; // Redirect to login page
+                window.location.href = "login.html"; // Redirect to login page
             }
         });
     </script>

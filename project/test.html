@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Test</title>
+    <title></title>
     <link rel="stylesheet" href="test.css">
 </head>
 <body>
     <h1 id="welcomeMessage">Welcome</h1>
-    <h1>API Test</h1>
 
     <div class="row-container">
         <div class="form-container">
@@ -65,23 +64,17 @@
     <button id="accManagementButton" onclick="window.location.href='accManagement.html'">Manage Account</button>
     
     <script>
-        // Display a welcome message with the user's name
-        document.addEventListener("DOMContentLoaded", () => {
-            const accessToken = sessionStorage.getItem("access_token");
-            if (accessToken) {
-                const payload = JSON.parse(atob(accessToken.split('.')[1]));
-                const username = payload.username;
-                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
-            }
-        });
-
-        // Redirect to landing.html if the user is not logged in
+        // Display a welcome message with the user's name and redirect to login.html if the user is not logged in
         document.addEventListener("DOMContentLoaded", () => {
             const accessToken = sessionStorage.getItem("access_token");
             if (!accessToken) {
-                // Redirect to the login page if no access token is found
-                window.location.href = "landing.html";
+                window.location.href = "login.html";
+                return;
             }
+
+            const payload = JSON.parse(atob(accessToken.split('.')[1]));
+            const username = payload.username;
+            document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
         });
     </script>
   

@@ -159,3 +159,21 @@ button:hover {
     padding: 15px; /* Reduce padding to make the islands more compact */
     box-sizing: border-box;
 }
+
+.back {
+    max-width: 200px; /* Set a maximum width */
+    margin: 10px auto; /* Center the button */
+    display: block;
+    padding: 10px;
+    background-color: #6c757d; /* Gray color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+}
+
+.back:hover {
+    background-color: #5a6268; /* Darker gray on hover */
+}

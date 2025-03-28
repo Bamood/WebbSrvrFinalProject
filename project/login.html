@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="test.css">
+</head>
+<body>
+    <h1>Welcome!</h1>
+
+    <h2>Login</h2>
+    <form id="loginForm">
+        <label for="loginUsername">Username:</label>
+        <input type="text" id="loginUsername" required>
+        <br>
+        <label for="loginPassword">Password:</label>
+        <input type="password" id="loginPassword" required>
+        <br>
+        <button type="submit">Login</button>
+        <button id="registerRedirectButton" type="button" onclick="window.location.href='register.html'">
+            Don't have an account? Register here
+        </button>
+    </form>
+
+    <script>
+        // Check if the user has an active access token
+        document.addEventListener("DOMContentLoaded", () => {
+            const accessToken = sessionStorage.getItem("access_token");
+            if (accessToken) {
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                if (payload.exp * 1000 > Date.now()) { // Check if token is expired
+                    window.location.href = "test.html";
+                } else {
+                    sessionStorage.removeItem("access_token"); // Clear expired token
+                }
+            }
+        });
+    </script>
+    <script src="test.js"></script>
+</body>
+</html>

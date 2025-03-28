@@ -2,7 +2,7 @@ const express = require("express");
 const argon2 = require("argon2");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken, generateTokens, refreshToken, encodeHTML } = require("./tokenManager");
+const { validateRequest, verifyToken, generateTokens, handleRefreshToken, encodeHTML } = require("./tokenManager");
 const router = express.Router();
 require("dotenv").config();
 
@@ -41,11 +41,11 @@ router.post("/login", async (req, res) => {
         try {
             const validPassword = await argon2.verify(user.password.toString(), password);
             if (!validPassword) {
-                return res.status(400).json({ error: "Invalid username or password" }); // Error message for wrong password
+                return res.status(400).json({ error: "Invalid username or password" });
             }
 
             const { accessToken, refreshToken, fingerprint } = generateTokens(user);
-            res.cookie("fingerprint", fingerprint, { httpOnly: true, secure: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "lax" })
+            res.cookie("fingerprint", fingerprint, { httpOnly: true, secure: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "strict" })
                 .status(200)
                 .json({ access_token: accessToken, refresh_token: refreshToken });
         } catch (error) {
@@ -54,18 +54,7 @@ router.post("/login", async (req, res) => {
     });
 });
 
-router.post("/refresh-token", (req, res) => {
-    const { refreshToken } = req.body;
-
-    // Validate the refresh token
-    if (!refreshToken || refreshToken !== "expected_refresh_token") {
-        return res.status(401).json({ error: "Invalid refresh token" });
-    }
-
-    // Issue a new access token
-    const newAccessToken = "new_access_token"; // Replace with actual token generation logic
-    res.json({ access_token: newAccessToken });
-});
+router.post("/refresh-token", handleRefreshToken);
 
 router.delete("/delete", verifyToken, (req, res) => {
     const { username } = req.user;
@@ -125,6 +114,11 @@ router.get("/info", verifyToken, (req, res) => {
             email: encodeHTML(user.email)
         });
     });
+});
+
+router.post("/logout", (req, res) => {
+    res.clearCookie("fingerprint", { httpOnly: true, secure: true, sameSite: "strict" });
+    res.status(200).json({ message: "Logged out successfully" });
 });
 
 module.exports = router;
