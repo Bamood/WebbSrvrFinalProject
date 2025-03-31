@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { validationResult } = require("express-validator");
-const sha256 = require("js-sha256").sha256;
 require("dotenv").config();
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -83,6 +82,7 @@ async function handleRefreshToken(req, res) {
     );
     res.json({ access_token: newAccessToken });
 }
+
 
 module.exports = { 
     validateRequest, 
