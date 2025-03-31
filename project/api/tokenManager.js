@@ -68,12 +68,10 @@ function validateRefreshToken(token) {
 
 async function handleRefreshToken(req, res) {
     const { refreshToken } = req.body;
-    console.log("Received refresh token:", refreshToken); // Debugging log
 
     // Validate the refresh token
     const payload = validateRefreshToken(refreshToken);
     if (!payload) {
-        console.log("Invalid refresh token"); // Debugging log
         return res.status(401).json({ error: "Invalid refresh token" });
     }
 
@@ -83,7 +81,6 @@ async function handleRefreshToken(req, res) {
         ACCESS_TOKEN_SECRET, // Use the correct secret key
         { expiresIn: "5m" }
     );
-    console.log("New access token issued:", newAccessToken); // Debugging log
     res.json({ access_token: newAccessToken });
 }
 

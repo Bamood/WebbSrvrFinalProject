@@ -37,7 +37,6 @@
         // Redirect to login.html if the user is not logged in
         document.addEventListener("DOMContentLoaded", () => {
             const accessToken = sessionStorage.getItem("access_token");
-            console.log("Access token in accManagement:", accessToken); // Debugging log
             if (!accessToken) {
                 window.location.href = "login.html"; // Redirect to login page
             }
