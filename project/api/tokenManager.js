@@ -33,22 +33,17 @@ const verifyToken = (req, res, next) => {
 };
 
 const generateTokens = (user) => {
-    const accessToken = jwt.sign({ username: user.username, auth: "user" }, ACCESS_TOKEN_SECRET, { expiresIn: "10m" });
-    const fingerprint = crypto.randomBytes(32).toString('base64');
-    const hash = sha256(fingerprint);
-    const refreshToken = jwt.sign({ username: user.username, fingerprint: Buffer.from(hash).toString('base64') }, REFRESH_TOKEN_SECRET, { expiresIn: "12h" });
-    return { accessToken, refreshToken, fingerprint };
+    const accessToken = jwt.sign({ username: user.username, auth: "user" }, ACCESS_TOKEN_SECRET, { expiresIn: "5m" });
+    const refreshToken = jwt.sign({ username: user.username }, REFRESH_TOKEN_SECRET, { expiresIn: "12h" });
+    return { accessToken, refreshToken };
 };
 
 const refreshToken = (refreshToken, fingerprint) => {
     return new Promise((resolve, reject) => {
         jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, decoded) => {
             if (err) return reject("Invalid refresh token");
-            if (sha256(fingerprint) !== Buffer.from(decoded.fingerprint, 'base64').toString('utf-8')) {
-                return reject("Invalid fingerprint");
-            }
-            const { accessToken, refreshToken: newRefreshToken, fingerprint: newFingerprint } = generateTokens(decoded);
-            resolve({ accessToken, newRefreshToken, newFingerprint });
+            const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
+            resolve({ accessToken, newRefreshToken });
         });
     });
 };
@@ -86,7 +81,7 @@ async function handleRefreshToken(req, res) {
     const newAccessToken = jwt.sign(
         { username: payload.username },
         ACCESS_TOKEN_SECRET, // Use the correct secret key
-        { expiresIn: "10m" }
+        { expiresIn: "5m" }
     );
     console.log("New access token issued:", newAccessToken); // Debugging log
     res.json({ access_token: newAccessToken });
@@ -99,5 +94,5 @@ module.exports = {
     refreshToken, 
     encodeHTML, 
     validateRefreshToken, 
-    handleRefreshToken 
+    handleRefreshToken
 };

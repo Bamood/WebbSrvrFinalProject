@@ -21,30 +21,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Function to refresh the access token
     async function refreshToken() {
-        const refreshToken = localStorage.getItem("refresh_token");
-        console.log("Refresh token accessed in refreshToken:", refreshToken); // Debugging log
-        if (!refreshToken) {
-            alert("No refresh token available. Please log in again.");
-            window.location.href = "login.html"; // Redirect to login
-            return false;
-        }
-
         const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
             method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ refreshToken })
+            credentials: "include", // Ensure cookies are sent with the request
         });
 
-        console.log("Refresh token response status:", response.status); // Debugging log
         const data = await response.json();
-        console.log("Refresh token response data:", data); // Debugging log
-
         if (response.ok) {
             sessionStorage.setItem("access_token", data.access_token); // Update the access token
-            console.log("Access token refreshed:", sessionStorage.getItem("access_token")); // Debugging log
             return true;
         } else {
             alert("Failed to refresh token. Please log in again.");
@@ -109,25 +93,27 @@ document.addEventListener("DOMContentLoaded", () => {
         const username = encodeHTML(document.getElementById("loginUsername").value);
         const password = encodeHTML(document.getElementById("loginPassword").value);
 
-        const response = await fetch("http://localhost:8000/api/accounts/login", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ username, password })
-        });
+        try {
+            const response = await fetch("http://localhost:8000/api/accounts/login", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, password })
+            });
 
-        const data = await response.json();
-        if (response.ok) {
-            sessionStorage.setItem("access_token", data.access_token);
-            localStorage.setItem("refresh_token", data.refresh_token); // Store the refresh token
-            console.log("Refresh token stored:", localStorage.getItem("refresh_token")); // Debugging log
-            alert("Login successful!");
-            // Redirect to another page after login
-            window.location.href = "test.html";
-        } else {
-            alert("Error: " + encodeHTML(data.error));
+            const data = await response.json();
+            if (response.ok) {
+                sessionStorage.setItem("access_token", data.access_token);
+                alert("Login successful!");
+                window.location.href = "test.html";
+            } else {
+                alert("Error: " + encodeHTML(data.error));
+            }
+        } catch (error) {
+            console.error("Error during login request:", error); // Debugging log
+            alert("An unexpected error occurred. Please try again.");
         }
     });
 

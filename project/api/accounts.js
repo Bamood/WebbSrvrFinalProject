@@ -33,28 +33,48 @@ router.post("/register",
 
 router.post("/login", async (req, res) => {
     const { username, password } = req.body;
+
     db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        if (results.length === 0) return res.status(400).json({ error: "Invalid username or password" });
+        if (err) {
+            console.error("Database error during login:", err); // Debugging log
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (results.length === 0) {
+            console.warn("Invalid username or password for username:", username); // Debugging log
+            return res.status(400).json({ error: "Invalid username or password" });
+        }
 
         const user = results[0];
         try {
             const validPassword = await argon2.verify(user.password.toString(), password);
             if (!validPassword) {
+                console.warn("Invalid password for username:", username); // Debugging log
                 return res.status(400).json({ error: "Invalid username or password" });
             }
 
-            const { accessToken, refreshToken, fingerprint } = generateTokens(user);
-            res.cookie("fingerprint", fingerprint, { httpOnly: true, secure: true, maxAge: 12 * 60 * 60 * 1000, sameSite: "strict" })
+            const { accessToken, refreshToken } = generateTokens(user);
+            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 })
                 .status(200)
-                .json({ access_token: accessToken, refresh_token: refreshToken });
+                .json({ access_token: accessToken });
         } catch (error) {
+            console.error("Error during password verification:", error); // Debugging log
             res.status(500).json({ error: "Internal server error" });
         }
     });
 });
 
-router.post("/refresh-token", handleRefreshToken);
+router.post("/refresh-token", async (req, res) => {
+    const refreshToken = req.cookies.refresh_token;
+    if (!refreshToken) return res.status(401).json({ error: "No refresh token provided" });
+
+    try {
+        const { accessToken, newRefreshToken } = await refreshToken(refreshToken);
+        res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
+        res.json({ access_token: accessToken });
+    } catch (error) {
+        res.status(401).json({ error });
+    }
+});
 
 router.delete("/delete", verifyToken, (req, res) => {
     const { username } = req.user;
@@ -117,7 +137,7 @@ router.get("/info", verifyToken, (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-    res.clearCookie("fingerprint", { httpOnly: true, secure: true, sameSite: "strict" });
+        res.clearCookie("fingerprint", { httpOnly: true, secure: true, sameSite: "strict" });
     res.status(200).json({ message: "Logged out successfully" });
 });
 
