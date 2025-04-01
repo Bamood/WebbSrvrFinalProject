@@ -8,7 +8,7 @@ router.post("/",
     verifyToken,
     validateRequest([
         body("postId").isInt().withMessage("Post ID must be an integer."),
-        body("comment").isLength({ min: 1 }).trim().escape().withMessage("Comment cannot be empty.")
+        body("comment").isLength({ min: 1 }).trim().withMessage("Comment cannot be empty.")
     ]),
     (req, res) => {
         const { postId, comment } = req.body;
