@@ -1,49 +1,37 @@
 const express = require("express");
 const argon2 = require("argon2");
 const { body } = require("express-validator");
-const csurf = require("csurf");
 const db = require("./sqlConnector");
 const { validateRequest, verifyToken, generateTokens, handleRefreshToken, encodeHTML } = require("./tokenManager");
 const router = express.Router();
 require("dotenv").config();
 
-// Create the CSRF protection middleware
-const csrfProtection = csurf({
-    cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax"
-    }
-});
+router.post("/register",
+    validateRequest([
+        body("username").isLength({ min: 3, max: 30 }).trim().escape(),
+        body("email").isEmail().normalizeEmail(),
+        body("password").isLength({ min: 4 }).escape()
+    ]),
+    async (req, res) => {
+        const { username, email, password } = req.body;
+        try {
+            const hashedPassword = await argon2.hash(password);
+            db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, email], (err, results) => {
+                if (err) return res.status(500).json({ error: "Database error" });
+                if (results.length > 0) return res.status(400).json({ error: "Username or email already exists" });
 
-// Apply CSRF protection only to routes that modify data
-router.post("/register", csrfProtection, validateRequest([
-    body("username").isLength({ min: 3, max: 30 }).trim().escape(),
-    body("email").isEmail().normalizeEmail(),
-    body("password").isLength({ min: 4 }).escape()
-]), async (req, res) => {
-    const { username, email, password } = req.body;
-    try {
-        const hashedPassword = await argon2.hash(password);
-        db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, email], (err, results) => {
-            if (err) return res.status(500).json({ error: "Database error" });
-            if (results.length > 0) return res.status(400).json({ error: "Username or email already exists" });
+                db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                    [username, email, hashedPassword], (err) => {
+                        if (err) return res.status(500).json({ error: "Database error" });
+                        res.status(201).json({ message: "User registered successfully" });
+                    });
+            });
+        } catch (error) {
+            res.status(500).json({ error: "Internal server error" });
+        }
+    });
 
-            db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-                [username, email, hashedPassword], (err) => {
-                    if (err) return res.status(500).json({ error: "Database error" });
-                    res.status(201).json({ message: "User registered successfully" });
-                });
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
-    }
-});
-
-router.post("/login", validateRequest([
-    body("username").notEmpty(),
-    body("password").notEmpty()
-]), async (req, res) => {
+router.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
@@ -78,23 +66,17 @@ router.post("/login", validateRequest([
 router.post("/refresh-token", async (req, res) => {
     const refreshToken = req.cookies.refresh_token;
     if (!refreshToken) return res.status(401).json({ error: "No refresh token provided" });
-  
-    try {
-      // Call the renamed function
-      const { accessToken, newRefreshToken } = await refreshToken(refreshToken);
-      res.cookie("refresh_token", newRefreshToken, { 
-        httpOnly: true, 
-        secure: true, 
-        sameSite: "strict", 
-        maxAge: 12 * 60 * 60 * 1000 
-      });
-      res.json({ access_token: accessToken });
-    } catch (error) {
-      res.status(401).json({ error });
-    }
-  });
 
-router.delete("/delete", csrfProtection, verifyToken, (req, res) => {
+    try {
+        const { accessToken, newRefreshToken } = await refreshToken(refreshToken);
+        res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
+        res.json({ access_token: accessToken });
+    } catch (error) {
+        res.status(401).json({ error });
+    }
+});
+
+router.delete("/delete", verifyToken, (req, res) => {
     const { username } = req.user;
     db.query("SELECT * FROM users WHERE username = ?", [username], (err, userResults) => {
         if (err || userResults.length === 0) return res.status(404).json({ error: "User not found" });
@@ -106,35 +88,38 @@ router.delete("/delete", csrfProtection, verifyToken, (req, res) => {
     });
 });
 
-router.put("/change-password", csrfProtection, verifyToken, validateRequest([
-    body("currentPassword").isLength({ min: 4 }).escape(),
-    body("newPassword").isLength({ min: 4 }).escape()
-]), async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-    const { username } = req.user;
+router.put("/change-password",
+    verifyToken,
+    validateRequest([
+        body("currentPassword").isLength({ min: 4 }).escape(),
+        body("newPassword").isLength({ min: 4 }).escape()
+    ]),
+    async (req, res) => {
+        const { currentPassword, newPassword } = req.body;
+        const { username } = req.user;
 
-    db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        if (results.length === 0) return res.status(404).json({ error: "User not found" });
+        db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
+            if (err) return res.status(500).json({ error: "Database error" });
+            if (results.length === 0) return res.status(404).json({ error: "User not found" });
 
-        const user = results[0];
-        try {
-            const validPassword = await argon2.verify(user.password.toString(), currentPassword);
-            if (!validPassword) return res.status(400).json({ error: "Current password is incorrect" });
+            const user = results[0];
+            try {
+                const validPassword = await argon2.verify(user.password.toString(), currentPassword);
+                if (!validPassword) return res.status(400).json({ error: "Current password is incorrect" });
 
-            const hashedNewPassword = await argon2.hash(newPassword);
-            db.query("UPDATE users SET password = ? WHERE username = ?", [hashedNewPassword, username], (err) => {
-                if (err) return res.status(500).json({ error: "Database error" });
+                const hashedNewPassword = await argon2.hash(newPassword);
+                db.query("UPDATE users SET password = ? WHERE username = ?", [hashedNewPassword, username], (err) => {
+                    if (err) return res.status(500).json({ error: "Database error" });
 
-                // Clear cookies to log the user out
-                res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
-                res.status(200).json({ message: "Password changed successfully. Please log in again." });
-            });
-        } catch (error) {
-            res.status(500).json({ error: "Internal server error" });
-        }
+                    // Clear cookies to log the user out
+                    res.clearCookie("fingerprint", { httpOnly: true, secure: true, sameSite: "lax" });
+                    res.status(200).json({ message: "Password changed successfully. Please log in again." });
+                });
+            } catch (error) {
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
     });
-});
 
 router.get("/info", verifyToken, (req, res) => {
     const { username } = req.user;
@@ -152,7 +137,7 @@ router.get("/info", verifyToken, (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-    res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
+        res.clearCookie("fingerprint", { httpOnly: true, secure: true, sameSite: "strict" });
     res.status(200).json({ message: "Logged out successfully" });
 });
 

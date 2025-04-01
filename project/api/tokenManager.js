@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { validationResult } = require("express-validator");
+const sha256 = require("js-sha256").sha256;
 require("dotenv").config();
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -36,16 +38,15 @@ const generateTokens = (user) => {
     return { accessToken, refreshToken };
 };
 
-// Fix the naming conflict and parameter inconsistency
-const refreshToken = (refreshTokenString) => {
+const refreshToken = (refreshToken, fingerprint) => {
     return new Promise((resolve, reject) => {
-      jwt.verify(refreshTokenString, REFRESH_TOKEN_SECRET, (err, decoded) => {
-        if (err) return reject("Invalid refresh token");
-        const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
-        resolve({ accessToken, newRefreshToken });
-      });
+        jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, decoded) => {
+            if (err) return reject("Invalid refresh token");
+            const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
+            resolve({ accessToken, newRefreshToken });
+        });
     });
-  };
+};
 
 // Utility function to encode HTML entities
 const encodeHTML = (str) => {

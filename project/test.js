@@ -1,6 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE_URL = "http://localhost:8000"; // Your server URL
-
     const encodeHTML = (str) => {
         return str.replace(/&/g, "&amp;")
                   .replace(/</g, "&lt;")
@@ -23,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Function to refresh the access token
     async function refreshToken() {
-        const response = await fetch(`${API_BASE_URL}/api/accounts/refresh-token`, {
+        const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
             method: "POST",
             credentials: "include", // Ensure cookies are sent with the request
         });
@@ -68,28 +66,13 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Error: " + encodeHTML(data.error || "Unknown error"));
     }
 
-    // Fetch CSRF token before making POST/PUT/DELETE requests
-    async function fetchCsrfToken() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/csrf-token`, {
-                credentials: "include" // Include cookies
-            });
-            if (!response.ok) throw new Error("Failed to fetch CSRF token");
-            const data = await response.json();
-            return data.csrfToken;
-        } catch (error) {
-            console.error("Error fetching CSRF token:", error);
-            return null;
-        }
-    }
-
     document.getElementById("registerForm")?.addEventListener("submit", async function (event) {
         event.preventDefault();
         const username = encodeHTML(document.getElementById("regUsername").value);
         const email = encodeHTML(document.getElementById("regEmail").value);
         const password = encodeHTML(document.getElementById("regPassword").value);
 
-        const response = await fetch(`${API_BASE_URL}/api/accounts/register`, {
+        const response = await fetch("http://localhost:8000/api/accounts/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -111,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = encodeHTML(document.getElementById("loginPassword").value);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/accounts/login`, {
+            const response = await fetch("http://localhost:8000/api/accounts/login", {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -134,12 +117,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Ensure CSRF token is included only for routes that require it
     document.getElementById("postForm")?.addEventListener("submit", async function (event) {
         event.preventDefault();
         const title = encodeHTML(document.getElementById("postTitle").value);
         const content = encodeHTML(document.getElementById("postContent").value);
-        const token = sessionStorage.getItem("access_token");
+        let token = sessionStorage.getItem("access_token");
 
         if (!token || isTokenExpired(token)) {
             alert("Your session has expired. Please log in again.");
@@ -147,29 +129,32 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const csrfToken = await fetchCsrfToken();
-        if (!csrfToken) {
-            alert("Security error: Could not get CSRF token");
-            return;
+        let response = await fetch("http://localhost:8000/api/posts", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ title, content })
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            const refreshed = await refreshToken();
+            if (refreshed) {
+                token = sessionStorage.getItem("access_token");
+                response = await fetch("http://localhost:8000/api/posts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({ title, content })
+                });
+            }
         }
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/posts`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                    "X-CSRF-Token": csrfToken
-                },
-                credentials: "include",
-                body: JSON.stringify({ title, content })
-            });
-
-            const data = await response.json();
-            alert(response.ok ? "Post created successfully!" : "Error: " + encodeHTML(data.error));
-        } catch (error) {
-            console.error("Error creating post:", error);
-        }
+        const data = await response.json();
+        alert(response.ok ? "Post created successfully!" : "Error: " + encodeHTML(data.error));
     });
 
     document.getElementById("deleteForm")?.addEventListener("submit", async function (event) {
@@ -183,26 +168,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const csrfToken = await fetchCsrfToken();
-        if (!csrfToken) {
-            alert("Security error: Could not get CSRF token");
-            return;
-        }
+        const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "X-CSRF-Token": csrfToken
-                }
-            });
-
-            const data = await response.json();
-            alert(response.ok ? "Post deleted successfully!" : "Error: " + encodeHTML(data.error));
-        } catch (error) {
-            console.error("Error deleting post:", error);
-        }
+        const data = await response.json();
+        alert(response.ok ? "Post deleted successfully!" : "Error: " + encodeHTML(data.error));
     });
 
     document.getElementById("deleteUserForm")?.addEventListener("submit", async function (event) {
@@ -214,17 +188,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const csrfToken = await fetchCsrfToken();
-        if (!csrfToken) {
-            alert("Security error: Could not get CSRF token");
-            return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/accounts/delete`, {
+        const response = await fetch("http://localhost:8000/api/accounts/delete", {
             method: "DELETE",
             headers: {
-                "Authorization": "Bearer " + token,
-                "X-CSRF-Token": csrfToken
+                "Authorization": "Bearer " + token
             }
         });
 
@@ -251,18 +218,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const csrfToken = await fetchCsrfToken();
-        if (!csrfToken) {
-            alert("Security error: Could not get CSRF token");
-            return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/comments`, {
+        const response = await fetch("http://localhost:8000/api/comments", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + token,
-                "X-CSRF-Token": csrfToken
+                "Authorization": "Bearer " + token
             },
             body: JSON.stringify({ postId, comment })
         });
@@ -282,17 +242,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const csrfToken = await fetchCsrfToken();
-        if (!csrfToken) {
-            alert("Security error: Could not get CSRF token");
-            return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
+        const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
             method: "DELETE",
             headers: {
-                "Authorization": "Bearer " + token,
-                "X-CSRF-Token": csrfToken
+                "Authorization": "Bearer " + token
             }
         });
 
@@ -312,41 +265,28 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const csrfToken = await fetchCsrfToken();
-        if (!csrfToken) {
-            alert("Security error: Could not get CSRF token");
-            return;
-        }
+        const response = await fetch("http://localhost:8000/api/accounts/change-password", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/accounts/change-password`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                    "X-CSRF-Token": csrfToken
-                },
-                body: JSON.stringify({ currentPassword, newPassword })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                alert("Error: " + encodeHTML(errorData.error || "Unknown error"));
-                return;
-            }
-
-            const data = await response.json();
+        const data = await response.json();
+        if (response.ok) {
             sessionStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
             alert("Password changed successfully. You have been logged out. Please log in again.");
-            window.location.href = "login.html";
-        } catch (error) {
-            console.error("Error changing password:", error);
-            alert("An unexpected error occurred. Please try again.");
+            window.location.href = "login.html"; // Redirect to the login page
+        } else {
+            alert("Error: " + encodeHTML(data.error));
         }
     });
 
     document.getElementById("logoutButton")?.addEventListener("click", async function () {
-        const response = await fetch(`${API_BASE_URL}/api/accounts/logout`, {
+        const response = await fetch("http://localhost:8000/api/accounts/logout", {
             method: "POST",
             credentials: "include"
         });
@@ -371,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Fetch user information
-        const response = await fetch(`${API_BASE_URL}/api/accounts/info`, {
+        const response = await fetch("http://localhost:8000/api/accounts/info", {
             method: "GET",
             headers: {
                 "Authorization": "Bearer " + token
