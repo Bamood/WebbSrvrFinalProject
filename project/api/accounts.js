@@ -9,17 +9,21 @@ require("dotenv").config();
 router.post("/register",
     validateRequest([
         body("username").isLength({ min: 3, max: 30 }).trim().escape(),
-        body("email").isEmail().normalizeEmail(),
+        body("email")
+            .isEmail().withMessage("Invalid email format")
+            .matches(/@(?:gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com|aol\.com|protonmail\.com|zoho\.com|yandex\.com|mail\.com)$/)
+            .withMessage("Invalid email domain. Allowed domains: gmail.com, yahoo.com, outlook.com, hotmail.com, icloud.com, aol.com, protonmail.com, zoho.com, yandex.com, mail.com")
+            .normalizeEmail(),
         body("password").isLength({ min: 4 }).escape()
     ]),
     async (req, res) => {
         const { username, email, password } = req.body;
         try {
-            const hashedPassword = await argon2.hash(password);
-            db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, email], (err, results) => {
+            db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
                 if (err) return res.status(500).json({ error: "Database error" });
-                if (results.length > 0) return res.status(400).json({ error: "Username or email already exists" });
+                if (results.length > 0) return res.status(400).json({ error: "Username already exists" });
 
+                const hashedPassword = await argon2.hash(password);
                 db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
                     [username, email, hashedPassword], (err) => {
                         if (err) return res.status(500).json({ error: "Database error" });
@@ -106,6 +110,9 @@ router.put("/change-password",
             try {
                 const validPassword = await argon2.verify(user.password.toString(), currentPassword);
                 if (!validPassword) return res.status(400).json({ error: "Current password is incorrect" });
+
+                const isSamePassword = await argon2.verify(user.password.toString(), newPassword);
+                if (isSamePassword) return res.status(400).json({ error: "New password cannot be the same as the current password" });
 
                 const hashedNewPassword = await argon2.hash(newPassword);
                 db.query("UPDATE users SET password = ? WHERE username = ?", [hashedNewPassword, username], (err) => {
