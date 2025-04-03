@@ -1,7 +1,5 @@
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 const { validationResult } = require("express-validator");
-const sha256 = require("js-sha256").sha256;
 require("dotenv").config();
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -38,7 +36,7 @@ const generateTokens = (user) => {
     return { accessToken, refreshToken };
 };
 
-const refreshToken = (refreshToken, fingerprint) => {
+const refreshToken = (refreshToken) => {
     return new Promise((resolve, reject) => {
         jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, decoded) => {
             if (err) return reject("Invalid refresh token");
@@ -48,37 +46,21 @@ const refreshToken = (refreshToken, fingerprint) => {
     });
 };
 
-// Utility function to encode HTML entities
-const encodeHTML = (str) => {
-    return str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;");
-};
-
 function validateRefreshToken(token) {
-    try {
-        return jwt.verify(token, REFRESH_TOKEN_SECRET); // Use the correct secret key
-    } catch (err) {
-        console.log("Refresh token validation failed:", err.message); // Debugging log
-        return null;
-    }
+    return jwt.verify(token, REFRESH_TOKEN_SECRET, (err, decoded) => (err ? null : decoded));
 }
 
 async function handleRefreshToken(req, res) {
     const { refreshToken } = req.body;
 
-    // Validate the refresh token
     const payload = validateRefreshToken(refreshToken);
     if (!payload) {
         return res.status(401).json({ error: "Invalid refresh token" });
     }
 
-    // Issue a new access token
     const newAccessToken = jwt.sign(
         { username: payload.username },
-        ACCESS_TOKEN_SECRET, // Use the correct secret key
+        ACCESS_TOKEN_SECRET,
         { expiresIn: "5m" }
     );
     res.json({ access_token: newAccessToken });
@@ -89,7 +71,6 @@ module.exports = {
     verifyToken, 
     generateTokens, 
     refreshToken, 
-    encodeHTML, 
     validateRefreshToken, 
     handleRefreshToken
 };
