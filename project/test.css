@@ -177,3 +177,203 @@ button:hover {
 .back:hover {
     background-color: #5a6268; /* Darker gray on hover */
 }
+
+#postsList {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.post-item {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #fff;
+    position: relative; /* Enable positioning for the delete button */
+}
+
+.post-item:hover {
+    background-color: #f9f9f9;
+}
+
+#postDetailView {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+
+#postDetailTitle {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+#postDetailContent {
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+
+#closePostDetail {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+}
+
+#closePostDetail:hover {
+    background-color: #0056b3;
+}
+
+.post-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.post-container h1 {
+    font-size: 1.8em;
+    margin-bottom: 15px;
+}
+
+.post-container p {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.post-container .back {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+}
+
+.post-container .back:hover {
+    background-color: #0056b3;
+}
+
+.comments-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.comments-container h2 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+}
+
+.comment-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    position: relative; /* Enable positioning for the delete button */
+    overflow: hidden; /* Ensure content respects the boundaries of the container */
+}
+
+.comment-item p {
+    margin: 0;
+    font-size: 1em;
+    word-wrap: break-word; /* Break long words if necessary */
+    margin-right: 60px; /* Add space to avoid overlapping with the delete button */
+}
+
+.comment-item small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.comment-item .delete-button {
+    position: absolute;
+    top: 10px;
+    right: 10px; /* Position the button on the right side */
+    padding: 5px 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.comment-item .delete-button:hover {
+    background-color: #c82333;
+}
+
+#addCommentForm {
+    margin-top: 20px;
+}
+
+#addCommentForm textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+#addCommentForm button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#addCommentForm button:hover {
+    background-color: #0056b3;
+}
+
+.delete-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+    width: auto; /* Adjust width to fit content */
+    margin: auto; /* Center the button */
+}
+
+.delete-button:hover {
+    background-color: #c82333;
+}
+

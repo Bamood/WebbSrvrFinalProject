@@ -125,6 +125,10 @@ return;
 
         const data = await response.json();
         alert(response.ok ? "Post created successfully!" : "Error: " + (data.error || "Unknown error"));
+
+        if (response.ok) {
+            loadPosts();
+        }
     });
 
     document.getElementById("deleteForm")?.addEventListener("submit", async (event) => {
@@ -145,6 +149,10 @@ return;
 
         const data = await response.json();
         alert(response.ok ? "Post deleted successfully!" : "Error: " + (data.error || "Unknown error"));
+
+        if (response.ok) {
+            loadPosts();
+        }
     });
 
     document.getElementById("logoutButton")?.addEventListener("click", async () => {
@@ -257,7 +265,7 @@ return;
 
         if (!currentPassword || !newPassword) {
             alert("Both current and new passwords are required.");
-return;
+            return;
         }
 
         if (!token || isTokenExpired(token)) {
@@ -308,4 +316,60 @@ return;
             window.location.href = "login.html";
         }
     });
+
+    if (sessionStorage.getItem("access_token")) {
+        loadPosts();
+    }
+
+
+
+    async function loadPosts() {
+        const token = sessionStorage.getItem("access_token");
+        if (!token || isTokenExpired(token)) {
+            document.getElementById("postsList").innerHTML = '<p>Please log in to see posts.</p>';
+            return;
+        }
+    
+        try {
+            const response = await fetch("http://localhost:8000/api/posts", {
+                method: "GET",
+                headers: { "Authorization": "Bearer " + token },
+            });
+    
+            if (!response.ok) {
+                document.getElementById("postsList").innerHTML = '<p>Could not load posts.</p>';
+                return;
+            }
+    
+            const posts = await response.json();
+            const postsListDiv = document.getElementById("postsList");
+            postsListDiv.innerHTML = '';
+    
+            if (posts.length === 0) {
+                postsListDiv.innerHTML = '<p>No posts yet.</p>';
+                return;
+            }
+    
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.classList.add('post-item');
+                postElement.innerHTML = `<strong>${post.title}</strong> (by ${post.user})`;
+                postElement.style.cursor = 'pointer';
+                postElement.dataset.postId = post.id;
+    
+                postElement.addEventListener('click', () => {
+                    window.location.href = `post.html?id=${post.id}`;
+                });
+                postsListDiv.appendChild(postElement);
+            });
+        } catch (error) {
+            document.getElementById("postsList").innerHTML = '<p>Error loading posts.</p>';
+        }
+    }
+    
+    document.getElementById('closePostDetail')?.addEventListener('click', () => {
+        document.getElementById("postDetailView").style.display = 'none';
+    });
+    
 });
+

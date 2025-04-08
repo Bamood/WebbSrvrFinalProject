@@ -49,4 +49,16 @@ router.get("/:id", verifyToken, (req, res) => {
     });
 });
 
+router.get("/", verifyToken, (req, res) => {
+    db.query("SELECT id, user, title, created FROM posts ORDER BY created DESC", (err, results) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        res.json(results.map(post => ({
+            id: post.id,
+            user: post.user,
+            title: post.title,
+            created: post.created
+        })));
+    });
+});
+
 module.exports = router;

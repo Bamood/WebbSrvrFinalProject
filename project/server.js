@@ -11,12 +11,11 @@ const PORT = 8000;
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: ["http://localhost:8000", "http://127.0.0.1:5500"], // Allow both origins
-    credentials: true, // Allow cookies
-    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"] // Include X-CSRF-Token
+    origin: ["http://localhost:8000", "http://127.0.0.1:5500"], 
+    credentials: true, 
+    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"] 
 }));
 
-// Add Content Security Policy (CSP) headers
 app.use((req, res, next) => {
     res.setHeader("Content-Security-Policy", 
         "default-src 'self'; " +

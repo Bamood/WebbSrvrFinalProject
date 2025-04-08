@@ -22,41 +22,17 @@
                 <button type="submit">Create Post</button>
             </form>
         </div>
-
-        <div class="form-container">
-            <h2>Delete Post</h2>
-            <form id="deleteForm">
-                <label for="deletePostId">Post ID:</label>
-                <input type="text" id="deletePostId" required>
-                <br>
-                <button type="submit">Delete Post</button>
-            </form>
-        </div>
-
-        <div class="form-container">
-            <h2>Create Comment</h2>
-            <form id="commentForm">
-                <label for="commentPostId">Post ID:</label>
-                <input type="text" id="commentPostId" required>
-                <br>
-                <label for="commentContent">Comment:</label>
-                <textarea id="commentContent" required></textarea>
-                <br>
-                <button type="submit">Create Comment</button>
-            </form>
-        </div>
-
-        <div class="form-container">
-            <h2>Delete Comment</h2>
-            <form id="deleteCommentForm">
-                <label for="deleteCommentId">Comment ID:</label>
-                <input type="text" id="deleteCommentId" required>
-                <br>
-                <button type="submit">Delete Comment</button>
-            </form>
-        </div>
     </div>
     
+    <h2>Posts</h2>
+    <div id="postsList"></div>
+
+    <div id="postDetailView" style="display: none;">
+        <h3 id="postDetailTitle"></h3>
+        <p id="postDetailContent"></p>
+        <button id="closePostDetail">Close</button>
+    </div>
+
     <h2>Logout</h2>
     <button id="logoutButton">Logout</button>
 
