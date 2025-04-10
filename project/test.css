@@ -174,12 +174,12 @@ button:hover {
     text-align: center;
 }
 
-.back:hover {
+back:hover {
     background-color: #5a6268; /* Darker gray on hover */
 }
 
 #postsList {
-    max-width: 800px;
+    max-width: 500px; /* Match the max-width of .form-container */
     margin: 20px auto;
     padding: 10px;
     background: #fff;

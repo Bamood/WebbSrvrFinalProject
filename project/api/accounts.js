@@ -40,25 +40,34 @@ router.post("/login", (req, res) => {
 
         const user = results[0];
         argon2.verify(user.password.toString(), password).then(validPassword => {
-                if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
+            if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
 
-                const { accessToken, refreshToken } = generateTokens(user);
-                res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 })
-                    .status(200)
-                    .json({ access_token: accessToken });
-            }).catch(() => res.status(500).json({ error: "Internal server error" }));
+            const { accessToken, refreshToken } = generateTokens(user);
+            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
+            console.log("Refresh token set in cookie:", refreshToken); // Log the refresh token
+            res.status(200).json({ access_token: accessToken });
+        }).catch(() => res.status(500).json({ error: "Internal server error" }));
     });
 });
 
 router.post("/refresh-token", (req, res) => {
+    console.log("Cookies received:", req.cookies); // Log received cookies
     const token = req.cookies.refresh_token;
-    if (!token) return res.status(401).json({ error: "No refresh token provided" });
+    if (!token) {
+        console.error("No refresh token provided"); // Log missing token
+        return res.status(401).json({ error: "No refresh token provided" });
+    }
 
     refreshToken(token)
         .then(({ accessToken, newRefreshToken }) => {
+            console.log("Refresh token successful, new tokens generated"); // Log success
             res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
             res.json({ access_token: accessToken });
-        }).catch(() => res.status(401).json({ error: "Invalid refresh token" }));
+        })
+        .catch((err) => {
+            console.error("Error refreshing token:", err); // Log error
+            res.status(401).json({ error: "Invalid refresh token" });
+        });
 });
 
 router.delete("/delete", verifyToken, (req, res) => {

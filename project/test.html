@@ -43,14 +43,24 @@
         // Display a welcome message with the user's name and redirect to login.html if the user is not logged in
         document.addEventListener("DOMContentLoaded", () => {
             const accessToken = sessionStorage.getItem("access_token");
+            console.log("Access token retrieved from sessionStorage:", accessToken); // Log the access token
+
             if (!accessToken) {
+                console.log("No access token found. Redirecting to login page."); // Log missing token
                 window.location.href = "login.html";
                 return;
             }
 
-            const payload = JSON.parse(atob(accessToken.split('.')[1]));
-            const username = payload.username;
-            document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
+            try {
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                console.log("Decoded access token payload:", payload); // Log the decoded payload
+                const username = payload.username;
+                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
+            } catch (error) {
+                console.error("Failed to decode access token:", error); // Log decoding error
+                sessionStorage.removeItem("access_token");
+                window.location.href = "login.html";
+            }
         });
     </script>
   

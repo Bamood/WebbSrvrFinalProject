@@ -10,17 +10,28 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     async function refreshToken() {
-        const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
-            method: "POST",
-            credentials: "include",
-        });
+        try {
+            console.log("Sending refresh token request..."); // Log before sending request
+            const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
+                method: "POST",
+                credentials: "include",
+            });
 
-        if (response.ok) {
-            const data = await response.json();
-            sessionStorage.setItem("access_token", data.access_token);
-            return true;
-        } else {
-            alert("Session expired. Please log in again.");
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Refresh token successful, new access token:", data.access_token); // Log success
+                sessionStorage.setItem("access_token", data.access_token);
+                return true;
+            } else {
+                console.error("Failed to refresh token, response status:", response.status); // Log failure
+                sessionStorage.removeItem("access_token");
+                alert("Session expired. Redirecting to login page...");
+                window.location.href = "login.html";
+                return false;
+            }
+        } catch (error) {
+            console.error("Error refreshing token:", error); // Log error
+            alert("An error occurred while refreshing the token. Please log in again.");
             window.location.href = "login.html";
             return false;
         }
@@ -353,7 +364,12 @@ return;
             posts.forEach(post => {
                 const postElement = document.createElement('div');
                 postElement.classList.add('post-item');
-                postElement.innerHTML = `<strong>${post.title}</strong> (by ${post.user})`;
+                const createdDate = new Date(post.created).toLocaleString(); // Format the creation date
+                postElement.innerHTML = `
+                    <strong>${post.title}</strong> (by ${post.user})
+                    <br>
+                    <small>Created on: ${createdDate}</small>
+                `;
                 postElement.style.cursor = 'pointer';
                 postElement.dataset.postId = post.id;
     

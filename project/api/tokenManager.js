@@ -31,16 +31,22 @@ const verifyToken = (req, res, next) => {
 };
 
 const generateTokens = (user) => {
-    const accessToken = jwt.sign({ username: user.username, auth: "user" }, ACCESS_TOKEN_SECRET, { expiresIn: "5m" });
+    const accessToken = jwt.sign({ username: user.username, auth: "user" }, ACCESS_TOKEN_SECRET, { expiresIn: "2m" });
     const refreshToken = jwt.sign({ username: user.username }, REFRESH_TOKEN_SECRET, { expiresIn: "12h" });
     return { accessToken, refreshToken };
 };
 
 const refreshToken = (refreshToken) => {
     return new Promise((resolve, reject) => {
+        console.log("Received refresh token:", refreshToken); // Debug log
         jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, decoded) => {
-            if (err) return reject("Invalid refresh token");
+            if (err) {
+                console.error("Refresh token verification failed:", err); // Debug log
+                return reject("Invalid refresh token");
+            }
+            console.log("Refresh token decoded payload:", decoded); // Debug log
             const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
+            console.log("Generated new tokens:", { accessToken, newRefreshToken }); // Debug log
             resolve({ accessToken, newRefreshToken });
         });
     });
@@ -61,7 +67,7 @@ async function handleRefreshToken(req, res) {
     const newAccessToken = jwt.sign(
         { username: payload.username },
         ACCESS_TOKEN_SECRET,
-        { expiresIn: "5m" }
+        { expiresIn: "2m" }
     );
     res.json({ access_token: newAccessToken });
 }
