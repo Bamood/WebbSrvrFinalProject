@@ -4,7 +4,6 @@ const { body } = require("express-validator");
 const db = require("./sqlConnector");
 const { validateRequest, verifyToken, generateTokens } = require("./tokenManager");
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 require("dotenv").config();
 
 router.post("/register",
@@ -44,68 +43,31 @@ router.post("/login", (req, res) => {
             if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
 
             const { accessToken, refreshToken } = generateTokens(user);
-            
-            res.cookie("access_token", accessToken, {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'lax',
-                path: '/',
-                maxAge: 2 * 60 * 1000 // 2 minutes
-            });
-
-            res.cookie("refresh_token", refreshToken, {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'lax',
-                path: '/',
-                maxAge: 12 * 60 * 60 * 1000 // 12 hours
-            });
-            
-            res.status(200).json({ 
-                message: "Login successful",
-                username: user.username 
-            });
+            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
+            console.log("Refresh token set in cookie:", refreshToken); // Log the refresh token
+            res.status(200).json({ access_token: accessToken });
         }).catch(() => res.status(500).json({ error: "Internal server error" }));
     });
 });
 
 router.post("/refresh-token", (req, res) => {
-    console.log("Received refresh token request");
-    console.log("All cookies:", req.cookies);
-    
+    console.log("Cookies received:", req.cookies); // Log received cookies
     const token = req.cookies.refresh_token;
     if (!token) {
-        console.error("No refresh token in cookies");
+        console.error("No refresh token provided"); // Log missing token
         return res.status(401).json({ error: "No refresh token provided" });
     }
 
-    try {
-        const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
-        console.log("Token verified:", decoded);
-
-        const { accessToken, refreshToken: newRefreshToken } = generateTokens({ username: decoded.username });
-        
-        res.cookie("access_token", accessToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 2 * 60 * 1000 // 2 minutes
+    refreshToken(token)
+        .then(({ accessToken, newRefreshToken }) => {
+            console.log("Refresh token successful, new tokens generated"); // Log success
+            res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
+            res.json({ access_token: accessToken });
+        })
+        .catch((err) => {
+            console.error("Error refreshing token:", err); // Log error
+            res.status(401).json({ error: "Invalid refresh token" });
         });
-        
-        res.cookie("refresh_token", newRefreshToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 12 * 60 * 60 * 1000
-        });
-        
-        return res.json({ access_token: accessToken });
-    } catch (err) {
-        console.error("Token verification failed:", err.message);
-        return res.status(401).json({ error: "Invalid refresh token" });
-    }
 });
 
 router.delete("/delete", verifyToken, (req, res) => {
@@ -143,7 +105,7 @@ router.put("/change-password",
                 argon2.hash(newPassword).then(hashedNewPassword => {
                     db.query("UPDATE users SET password = ? WHERE username = ?", [hashedNewPassword, username], (err) => {
                         if (err) return res.status(500).json({ error: "Database error" });
-                        res.clearCookie("refresh_token", { httpOnly: false, secure: false, sameSite: "lax" });
+                        res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
                         res.status(200).json({ message: "Password changed successfully. Please log in again." });
                     });
                 }).catch(() => res.status(500).json({ error: "Internal server error" }));
@@ -167,61 +129,8 @@ router.get("/info", verifyToken, (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-    // Clear both tokens
-    res.clearCookie("access_token", {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        path: '/'
-    });
-    res.clearCookie("refresh_token", {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        path: '/'
-    });
+    res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
     res.status(200).json({ message: "Logged out successfully" });
-});
-
-router.get("/check-auth", (req, res) => {
-    const token = req.cookies.access_token;
-    if (!token) {
-        return res.status(200).json({ authenticated: false });
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        return res.json({ 
-            authenticated: true,
-            username: decoded.username
-        });
-    } catch (err) {
-        // Try to refresh the token if access token is expired
-        const refreshToken = req.cookies.refresh_token;
-        if (refreshToken) {
-            try {
-                const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-                const { accessToken } = generateTokens({ username: decoded.username });
-                
-                res.cookie("access_token", accessToken, {
-                    httpOnly: true,
-                    secure: false,
-                    sameSite: 'lax',
-                    path: '/',
-                    maxAge: 2 * 60 * 1000
-                });
-
-                return res.json({ 
-                    authenticated: true,
-                    username: decoded.username
-                });
-            } catch (refreshErr) {
-                // Both tokens are invalid
-                return res.status(200).json({ authenticated: false });
-            }
-        }
-        return res.status(200).json({ authenticated: false });
-    }
 });
 
 module.exports = router;

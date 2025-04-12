@@ -17,11 +17,12 @@ const validateRequest = (validations) => {
 };
 
 const verifyToken = (req, res, next) => {
-    const token = req.cookies.access_token;
-    if (!token) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({ error: "No access token provided" });
     }
 
+    const token = authHeader.split(" ")[1];
     jwt.verify(token, ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) return res.status(403).json({ error: "Invalid access token" });
         req.user = decoded;
