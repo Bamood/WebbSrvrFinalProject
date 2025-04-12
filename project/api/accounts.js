@@ -43,26 +43,31 @@ router.post("/login", (req, res) => {
             if (!validPassword) return res.status(400).json({ error: "Invalid username or password" });
 
             const { accessToken, refreshToken } = generateTokens(user);
-            res.cookie("access_token", accessToken, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 2 * 60 * 1000 }); // Store access token in cookie
-            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 12 * 60 * 60 * 1000 }); // Store refresh token in cookie
-            res.status(200).json({ message: "Login successful" });
+            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
+            console.log("Refresh token set in cookie:", refreshToken); // Log the refresh token
+            res.status(200).json({ access_token: accessToken });
         }).catch(() => res.status(500).json({ error: "Internal server error" }));
     });
 });
 
 router.post("/refresh-token", (req, res) => {
+    console.log("Cookies received:", req.cookies); // Log received cookies
     const token = req.cookies.refresh_token;
     if (!token) {
+        console.error("No refresh token provided"); // Log missing token
         return res.status(401).json({ error: "No refresh token provided" });
     }
 
     refreshToken(token)
         .then(({ accessToken, newRefreshToken }) => {
-            res.cookie("access_token", accessToken, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 2 * 60 * 1000 }); // Update access token in cookie
-            res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 12 * 60 * 60 * 1000 }); // Update refresh token in cookie
-            res.json({ message: "Tokens refreshed successfully" });
+            console.log("Refresh token successful, new tokens generated"); // Log success
+            res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
+            res.json({ access_token: accessToken });
         })
-        .catch(() => res.status(401).json({ error: "Invalid refresh token" }));
+        .catch((err) => {
+            console.error("Error refreshing token:", err); // Log error
+            res.status(401).json({ error: "Invalid refresh token" });
+        });
 });
 
 router.delete("/delete", verifyToken, (req, res) => {
@@ -100,7 +105,7 @@ router.put("/change-password",
                 argon2.hash(newPassword).then(hashedNewPassword => {
                     db.query("UPDATE users SET password = ? WHERE username = ?", [hashedNewPassword, username], (err) => {
                         if (err) return res.status(500).json({ error: "Database error" });
-                        res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "lax" });
+                        res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
                         res.status(200).json({ message: "Password changed successfully. Please log in again." });
                     });
                 }).catch(() => res.status(500).json({ error: "Internal server error" }));
@@ -124,8 +129,7 @@ router.get("/info", verifyToken, (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-    res.clearCookie("access_token", { httpOnly: true, secure: true, sameSite: "lax" }); // Clear access token cookie
-    res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "lax" }); // Clear refresh token cookie
+    res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
     res.status(200).json({ message: "Logged out successfully" });
 });
 

@@ -31,9 +31,10 @@
         document.addEventListener("DOMContentLoaded", async () => {
             const params = new URLSearchParams(window.location.search);
             const postId = params.get("id");
+            const token = sessionStorage.getItem("access_token");
 
-            if (!postId) {
-                alert("Invalid post.");
+            if (!postId || !token) {
+                alert("Invalid post or session expired.");
                 window.location.href = "test.html";
                 return;
             }
@@ -41,7 +42,7 @@
             try {
                 const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
                     method: "GET",
-                    credentials: "include", // Include cookies in the request
+                    headers: { "Authorization": "Bearer " + token },
                 });
 
                 if (!response.ok) {
@@ -51,10 +52,11 @@
                 }
 
                 const post = await response.json();
+                const payload = JSON.parse(atob(token.split('.')[1])); // Decode the token to get the username
+                const currentUser = payload.username;
+
                 document.getElementById("postTitle").textContent = post.title;
                 document.getElementById("postContent").textContent = post.content;
-
-                const currentUser = post.currentUser;
 
                 // Show delete button only if the current user is the post creator
                 if (post.user === currentUser) {
@@ -65,7 +67,7 @@
                             try {
                                 const deleteResponse = await fetch(`http://localhost:8000/api/posts/${postId}`, {
                                     method: "DELETE",
-                                    credentials: "include", // Include cookies in the request
+                                    headers: { "Authorization": "Bearer " + token },
                                 });
 
                                 if (deleteResponse.ok) {
@@ -82,7 +84,7 @@
                     });
                 }
 
-                await loadComments(postId);
+                await loadComments(postId, token);
             } catch (error) {
                 console.error("Error loading post details:", error);
                 alert("Error loading post details.");
@@ -102,14 +104,14 @@
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token,
                         },
-                        credentials: "include", // Include cookies in the request
                         body: JSON.stringify({ postId: parseInt(postId, 10), comment: commentContent }),
                     });
 
                     if (response.ok) {
                         document.getElementById("newCommentContent").value = '';
-                        await loadComments(postId);
+                        await loadComments(postId, token);
                     } else {
                         const data = await response.json();
                         alert("Error adding comment: " + (data.error || "Unknown error"));
@@ -121,14 +123,14 @@
             });
         });
 
-        async function loadComments(postId) {
+        async function loadComments(postId, token) {
             const commentsListDiv = document.getElementById("commentsList");
             commentsListDiv.innerHTML = '<p>Loading comments...</p>';
 
             try {
                 const response = await fetch(`http://localhost:8000/api/comments/${postId}`, {
                     method: "GET",
-                    credentials: "include", // Include cookies in the request
+                    headers: { "Authorization": "Bearer " + token },
                 });
 
                 if (response.status === 404) {
@@ -142,7 +144,8 @@
                 }
 
                 const comments = await response.json();
-                const currentUser = comments.currentUser;
+                const payload = JSON.parse(atob(token.split('.')[1])); // Decode the token to get the username
+                const currentUser = payload.username;
 
                 commentsListDiv.innerHTML = '';
 
@@ -167,12 +170,12 @@
                                     try {
                                         const deleteResponse = await fetch(`http://localhost:8000/api/comments/${comment.id}`, {
                                             method: "DELETE",
-                                            credentials: "include", // Include cookies in the request
+                                            headers: { "Authorization": "Bearer " + token },
                                         });
 
                                         if (deleteResponse.ok) {
                                             alert("Comment deleted successfully.");
-                                            await loadComments(postId);
+                                            await loadComments(postId, token);
                                         } else {
                                             alert("Failed to delete comment.");
                                         }
