@@ -41,24 +41,21 @@
     
     <script>
         // Display a welcome message with the user's name and redirect to login.html if the user is not logged in
-        document.addEventListener("DOMContentLoaded", () => {
-            const accessToken = sessionStorage.getItem("access_token");
-            console.log("Access token retrieved from sessionStorage:", accessToken); // Log the access token
-
-            if (!accessToken) {
-                console.log("No access token found. Redirecting to login page."); // Log missing token
-                window.location.href = "login.html";
-                return;
-            }
-
+        document.addEventListener("DOMContentLoaded", async () => {
             try {
-                const payload = JSON.parse(atob(accessToken.split('.')[1]));
-                console.log("Decoded access token payload:", payload); // Log the decoded payload
-                const username = payload.username;
-                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
+                const response = await fetch("http://localhost:8000/api/accounts/info", {
+                    method: "GET",
+                    credentials: "include", // Include cookies in the request
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("welcomeMessage").textContent = `Welcome, ${data.username}!`;
+                } else {
+                    throw new Error("Not authenticated");
+                }
             } catch (error) {
-                console.error("Failed to decode access token:", error); // Log decoding error
-                sessionStorage.removeItem("access_token");
+                console.error("Authentication error:", error);
                 window.location.href = "login.html";
             }
         });

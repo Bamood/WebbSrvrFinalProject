@@ -11,26 +11,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function refreshToken() {
         try {
-            console.log("Sending refresh token request..."); // Log before sending request
             const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
                 method: "POST",
-                credentials: "include",
+                credentials: "include", // Include cookies in the request
             });
 
             if (response.ok) {
-                const data = await response.json();
-                console.log("Refresh token successful, new access token:", data.access_token); // Log success
-                sessionStorage.setItem("access_token", data.access_token);
+                console.log("Refresh token successful");
                 return true;
             } else {
-                console.error("Failed to refresh token, response status:", response.status); // Log failure
-                sessionStorage.removeItem("access_token");
+                console.error("Failed to refresh token");
                 alert("Session expired. Redirecting to login page...");
                 window.location.href = "login.html";
                 return false;
             }
         } catch (error) {
-            console.error("Error refreshing token:", error); // Log error
+            console.error("Error refreshing token:", error);
             alert("An error occurred while refreshing the token. Please log in again.");
             window.location.href = "login.html";
             return false;
@@ -38,17 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function startAccessTokenRefreshTimer() {
-        const token = sessionStorage.getItem("access_token");
-        if (!token) return;
-
-        const payload = decodeJWT(token);
-        const refreshTime = payload.exp * 1000 - Date.now() - 60000;
-
-        if (refreshTime > 0) {
-            setTimeout(async () => {
-                if (await refreshToken()) startAccessTokenRefreshTimer();
-            }, refreshTime);
-        }
+        setTimeout(async () => {
+            if (await refreshToken()) startAccessTokenRefreshTimer();
+        }, 2 * 60 * 1000 - 60000); // Refresh 1 minute before expiration
     }
 
     startAccessTokenRefreshTimer();
@@ -85,18 +73,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const response = await fetch("http://localhost:8000/api/accounts/login", {
             method: "POST",
-            credentials: "include",
+            credentials: "include", // Include cookies in the request
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
         });
 
         if (response.ok) {
-            const data = await response.json();
-            sessionStorage.setItem("access_token", data.access_token);
             alert("Login successful!");
+            startAccessTokenRefreshTimer();
             window.location.href = "test.html";
         } else {
-            await handleError(response);
+            const data = await response.json();
+            alert("Error: " + (data.error || "Unknown error"));
         }
     });
 
@@ -104,19 +92,12 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
         const title = document.getElementById("postTitle").value;
         const content = document.getElementById("postContent").value;
-        let token = sessionStorage.getItem("access_token");
-
-        if (!token || isTokenExpired(token)) {
-            alert("Your session has expired. Please log in again.");
-            window.location.href = "login.html";
-return;
-}
 
         let response = await fetch("http://localhost:8000/api/posts", {
             method: "POST",
+            credentials: "include", // Include cookies in the request
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + token,
             },
             body: JSON.stringify({ title, content }),
         });
@@ -125,9 +106,9 @@ return;
             if (await refreshToken()) {
                 response = await fetch("http://localhost:8000/api/posts", {
                     method: "POST",
+                    credentials: "include", // Include cookies in the request
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": "Bearer " + sessionStorage.getItem("access_token"),
                     },
                     body: JSON.stringify({ title, content }),
                 });
@@ -145,17 +126,10 @@ return;
     document.getElementById("deleteForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const postId = document.getElementById("deletePostId").value;
-        const token = sessionStorage.getItem("access_token");
-
-        if (!token || isTokenExpired(token)) {
-            alert("Your session has expired. Please log in again.");
-            window.location.href = "login.html";
-return;
-}
 
         const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
             method: "DELETE",
-            headers: { "Authorization": "Bearer " + token },
+            credentials: "include", // Include cookies in the request
         });
 
         const data = await response.json();
@@ -169,11 +143,10 @@ return;
     document.getElementById("logoutButton")?.addEventListener("click", async () => {
         const response = await fetch("http://localhost:8000/api/accounts/logout", {
             method: "POST",
-            credentials: "include",
+            credentials: "include", // Include cookies in the request
         });
 
         if (response.ok) {
-            sessionStorage.removeItem("access_token");
             alert("Logged out successfully!");
             window.location.href = "login.html";
         } else {
@@ -185,7 +158,6 @@ return;
         event.preventDefault();
         const postId = document.getElementById("commentPostId").value.trim();
         const comment = document.getElementById("commentContent").value.trim();
-        const token = sessionStorage.getItem("access_token");
 
         if (!postId || isNaN(postId)) {
             alert("Invalid Post ID. Please enter a valid number.");
@@ -197,17 +169,11 @@ return;
             return;
         }
 
-        if (!token || isTokenExpired(token)) {
-            alert("Your session has expired. Please log in again.");
-            window.location.href = "login.html";
-            return;
-        }
-
         const response = await fetch("http://localhost:8000/api/comments", {
             method: "POST",
+            credentials: "include", // Include cookies in the request
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + token,
             },
             body: JSON.stringify({ postId: parseInt(postId, 10), comment }),
         });
@@ -219,22 +185,15 @@ return;
     document.getElementById("deleteCommentForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const commentId = document.getElementById("deleteCommentId").value.trim();
-        const token = sessionStorage.getItem("access_token");
 
         if (!commentId || isNaN(commentId)) {
             alert("Invalid Comment ID. Please enter a valid number.");
             return;
         }
 
-        if (!token || isTokenExpired(token)) {
-            alert("Your session has expired. Please log in again.");
-            window.location.href = "login.html";
-            return;
-        }
-
         const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
             method: "DELETE",
-            headers: { "Authorization": "Bearer " + token },
+            credentials: "include", // Include cookies in the request
         });
 
         const data = await response.json();
@@ -242,19 +201,9 @@ return;
     });
 
     document.getElementById("showInfoButton")?.addEventListener("click", async () => {
-        const token = sessionStorage.getItem("access_token");
-
-        if (!token || isTokenExpired(token)) {
-            alert("Your session has expired. Please log in again.");
-            window.location.href = "login.html";
-            return;
-        }
-
         const response = await fetch("http://localhost:8000/api/accounts/info", {
             method: "GET",
-            headers: {
-                "Authorization": "Bearer " + token,
-            },
+            credentials: "include", // Include cookies in the request
         });
 
         if (response.ok) {
@@ -272,24 +221,17 @@ return;
         event.preventDefault();
         const currentPassword = document.getElementById("currentPassword").value.trim();
         const newPassword = document.getElementById("newPassword").value.trim();
-        const token = sessionStorage.getItem("access_token");
 
         if (!currentPassword || !newPassword) {
             alert("Both current and new passwords are required.");
             return;
         }
 
-        if (!token || isTokenExpired(token)) {
-            alert("Your session has expired. Please log in again.");
-            window.location.href = "login.html";
-            return;
-        }
-
         const response = await fetch("http://localhost:8000/api/accounts/change-password", {
             method: "PUT",
+            credentials: "include", // Include cookies in the request
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + token,
             },
             body: JSON.stringify({ currentPassword, newPassword }),
         });
@@ -298,62 +240,45 @@ return;
         alert(response.ok ? "Password changed successfully! Please log in again." : "Error: " + (data.error || "Unknown error"));
 
         if (response.ok) {
-            sessionStorage.removeItem("access_token");
             window.location.href = "login.html";
         }
     });
 
     document.getElementById("deleteUserButton")?.addEventListener("click", async () => {
-        const token = sessionStorage.getItem("access_token");
-
-        if (!token || isTokenExpired(token)) {
-            alert("Your session has expired. Please log in again.");
-            window.location.href = "login.html";
-            return;
-        }
-
         const response = await fetch("http://localhost:8000/api/accounts/delete", {
             method: "DELETE",
-            headers: {
-                "Authorization": "Bearer " + token,
-            },
+            credentials: "include", // Include cookies in the request
         });
 
         const data = await response.json();
         alert(response.ok ? "User deleted successfully!" : "Error: " + (data.error || "Unknown error"));
 
         if (response.ok) {
-            sessionStorage.removeItem("access_token");
             window.location.href = "login.html";
         }
     });
 
-    if (sessionStorage.getItem("access_token")) {
-        loadPosts();
-    }
-
-
+    loadPosts();
 
     async function loadPosts() {
-        const token = sessionStorage.getItem("access_token");
-        if (!token || isTokenExpired(token)) {
-            document.getElementById("postsList").innerHTML = '<p>Please log in to see posts.</p>';
+        const postsListDiv = document.getElementById("postsList");
+        if (!postsListDiv) {
+            console.error("Element with ID 'postsList' not found in the DOM.");
             return;
         }
-    
+
         try {
             const response = await fetch("http://localhost:8000/api/posts", {
                 method: "GET",
-                headers: { "Authorization": "Bearer " + token },
+                credentials: "include", // Include cookies in the request
             });
     
             if (!response.ok) {
-                document.getElementById("postsList").innerHTML = '<p>Could not load posts.</p>';
+                postsListDiv.innerHTML = '<p>Could not load posts.</p>';
                 return;
             }
     
             const posts = await response.json();
-            const postsListDiv = document.getElementById("postsList");
             postsListDiv.innerHTML = '';
     
             if (posts.length === 0) {
@@ -364,7 +289,7 @@ return;
             posts.forEach(post => {
                 const postElement = document.createElement('div');
                 postElement.classList.add('post-item');
-                const createdDate = new Date(post.created).toLocaleString(); // Format the creation date
+                const createdDate = new Date(post.created).toLocaleString();
                 postElement.innerHTML = `
                     <strong>${post.title}</strong> (by ${post.user})
                     <br>
@@ -379,7 +304,8 @@ return;
                 postsListDiv.appendChild(postElement);
             });
         } catch (error) {
-            document.getElementById("postsList").innerHTML = '<p>Error loading posts.</p>';
+            console.error("Error loading posts:", error);
+            postsListDiv.innerHTML = '<p>Error loading posts.</p>';
         }
     }
     
@@ -387,5 +313,6 @@ return;
         document.getElementById("postDetailView").style.display = 'none';
     });
     
+    loadPosts(); // Ensure this is called after the DOM is fully loaded
 });
 
