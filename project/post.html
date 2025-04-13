@@ -9,193 +9,20 @@
 <body>
     <div class="post-container">
         <h1 id="postTitle">Loading...</h1>
-        <p id="postContent"></p>
-        <button class="delete-button" id="deletePostButton" style="display: none;">Delete Post</button>
-        <button class="back" onclick="window.location.href='test.html'">Back to Posts</button>
+        <p id="postContent">Please wait while the post is being loaded.</p>
+        <button id="backButton" class="back">Back</button>
+        <!-- The delete button will be dynamically added here if the user is the owner -->
     </div>
 
     <div class="comments-container">
         <h2>Comments</h2>
-        <div id="commentsList">
-            <p>Loading comments...</p>
-        </div>
-
+        <div id="commentsList"></div>
         <form id="addCommentForm">
-            <h3>Add a Comment</h3>
-            <textarea id="newCommentContent" placeholder="Write your comment here..." required></textarea>
-            <button type="submit">Submit Comment</button>
+            <textarea id="commentContent" placeholder="Add a comment..." required></textarea>
+            <button type="submit">Add Comment</button>
         </form>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            const params = new URLSearchParams(window.location.search);
-            const postId = params.get("id");
-            const token = sessionStorage.getItem("access_token");
-
-            if (!postId || !token) {
-                alert("Invalid post or session expired.");
-                window.location.href = "test.html";
-                return;
-            }
-
-            try {
-                const response = await fetch(`http://localhost:8000/api/posts/${postId}`, {
-                    method: "GET",
-                    headers: { "Authorization": "Bearer " + token },
-                });
-
-                if (!response.ok) {
-                    alert("Failed to load post details.");
-                    window.location.href = "test.html";
-                    return;
-                }
-
-                const post = await response.json();
-                const payload = JSON.parse(atob(token.split('.')[1])); // Decode the token to get the username
-                const currentUser = payload.username;
-
-                document.getElementById("postTitle").textContent = post.title;
-                document.getElementById("postContent").textContent = post.content;
-
-                // Show delete button only if the current user is the post creator
-                if (post.user === currentUser) {
-                    const deletePostButton = document.getElementById("deletePostButton");
-                    deletePostButton.style.display = "inline-block";
-                    deletePostButton.addEventListener("click", async () => {
-                        if (confirm("Are you sure you want to delete this post?")) {
-                            try {
-                                const deleteResponse = await fetch(`http://localhost:8000/api/posts/${postId}`, {
-                                    method: "DELETE",
-                                    headers: { "Authorization": "Bearer " + token },
-                                });
-
-                                if (deleteResponse.ok) {
-                                    alert("Post deleted successfully.");
-                                    window.location.href = "test.html";
-                                } else {
-                                    alert("Failed to delete post.");
-                                }
-                            } catch (error) {
-                                console.error("Error deleting post:", error);
-                                alert("Error deleting post.");
-                            }
-                        }
-                    });
-                }
-
-                await loadComments(postId, token);
-            } catch (error) {
-                console.error("Error loading post details:", error);
-                alert("Error loading post details.");
-            }
-
-            document.getElementById("addCommentForm")?.addEventListener("submit", async (event) => {
-                event.preventDefault();
-                const commentContent = document.getElementById("newCommentContent").value.trim();
-
-                if (!commentContent) {
-                    alert("Comment cannot be empty.");
-                    return;
-                }
-
-                try {
-                    const response = await fetch("http://localhost:8000/api/comments", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer " + token,
-                        },
-                        body: JSON.stringify({ postId: parseInt(postId, 10), comment: commentContent }),
-                    });
-
-                    if (response.ok) {
-                        document.getElementById("newCommentContent").value = '';
-                        await loadComments(postId, token);
-                    } else {
-                        const data = await response.json();
-                        alert("Error adding comment: " + (data.error || "Unknown error"));
-                    }
-                } catch (error) {
-                    console.error("Error submitting comment:", error);
-                    alert("Failed to submit comment.");
-                }
-            });
-        });
-
-        async function loadComments(postId, token) {
-            const commentsListDiv = document.getElementById("commentsList");
-            commentsListDiv.innerHTML = '<p>Loading comments...</p>';
-
-            try {
-                const response = await fetch(`http://localhost:8000/api/comments/${postId}`, {
-                    method: "GET",
-                    headers: { "Authorization": "Bearer " + token },
-                });
-
-                if (response.status === 404) {
-                    commentsListDiv.innerHTML = '<p>No comments yet.</p>';
-                    return;
-                }
-
-                if (!response.ok) {
-                    commentsListDiv.innerHTML = '<p>Could not load comments.</p>';
-                    return;
-                }
-
-                const comments = await response.json();
-                const payload = JSON.parse(atob(token.split('.')[1])); // Decode the token to get the username
-                const currentUser = payload.username;
-
-                commentsListDiv.innerHTML = '';
-
-                if (comments.length === 0) {
-                    commentsListDiv.innerHTML = '<p>No comments yet.</p>';
-                } else {
-                    comments.forEach(comment => {
-                        const commentElement = document.createElement('div');
-                        commentElement.classList.add('comment-item');
-                        const commentDate = new Date(comment.created_at).toLocaleString();
-                        commentElement.innerHTML = `
-                            <p><strong>${comment.user}:</strong> ${comment.comment}</p>
-                            <small>Posted on: ${commentDate}</small>
-                        `;
-
-                        if (comment.user === currentUser) {
-                            const deleteButton = document.createElement('button');
-                            deleteButton.classList.add('delete-button');
-                            deleteButton.textContent = 'Delete';
-                            deleteButton.addEventListener('click', async () => {
-                                if (confirm("Are you sure you want to delete this comment?")) {
-                                    try {
-                                        const deleteResponse = await fetch(`http://localhost:8000/api/comments/${comment.id}`, {
-                                            method: "DELETE",
-                                            headers: { "Authorization": "Bearer " + token },
-                                        });
-
-                                        if (deleteResponse.ok) {
-                                            alert("Comment deleted successfully.");
-                                            await loadComments(postId, token);
-                                        } else {
-                                            alert("Failed to delete comment.");
-                                        }
-                                    } catch (error) {
-                                        console.error("Error deleting comment:", error);
-                                        alert("Error deleting comment.");
-                                    }
-                                }
-                            });
-                            commentElement.appendChild(deleteButton);
-                        }
-
-                        commentsListDiv.appendChild(commentElement);
-                    });
-                }
-            } catch (error) {
-                console.error("Error loading comments:", error);
-                commentsListDiv.innerHTML = '<p>Error loading comments.</p>';
-            }
-        }
-    </script>
+    <script src="test.js"></script>
 </body>
 </html>

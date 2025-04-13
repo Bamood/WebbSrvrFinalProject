@@ -194,7 +194,8 @@ back:hover {
     border: 1px solid #ddd;
     border-radius: 5px;
     background: #fff;
-    position: relative; /* Enable positioning for the delete button */
+    position: relative;
+    cursor: pointer; /* Add pointer cursor to indicate clickability */
 }
 
 .post-item:hover {
@@ -375,5 +376,9 @@ back:hover {
 
 .delete-button:hover {
     background-color: #c82333;
+}
+
+.hidden {
+    display: none !important;
 }
 

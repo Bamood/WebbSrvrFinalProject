@@ -22,7 +22,7 @@
 
     <h2>Show Information</h2>
     <button id="showInfoButton">Show Information</button>
-    <div id="userInfo" style="display: none;">
+    <div id="userInfo" class="hidden">
         <p>Username: <span id="infoUsername"></span></p>
         <p>Email: <span id="infoEmail"></span></p>
     </div>
@@ -31,17 +31,8 @@
     <button id="deleteUserButton">Delete User</button>
 
     <h2>Back to Dashboard</h2>
-    <button class='back' onclick="window.location.href='test.html'">Back</button>
+    <button id="backToDashboardButton" class="back">Back</button>
 
-    <script>
-        // Redirect to login.html if the user is not logged in
-        document.addEventListener("DOMContentLoaded", () => {
-            const accessToken = sessionStorage.getItem("access_token");
-            if (!accessToken) {
-                window.location.href = "login.html"; // Redirect to login page
-            }
-        });
-    </script>
     <script src="test.js"></script>
 </body>
 </html>

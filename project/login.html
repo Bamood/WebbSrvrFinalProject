@@ -23,25 +23,6 @@
         </button>
     </form>
 
-    <script>
-        // Check if the user has an active access token
-        document.addEventListener("DOMContentLoaded", () => {
-            const accessToken = sessionStorage.getItem("access_token");
-            if (accessToken) {
-                try {
-                    const payload = JSON.parse(atob(accessToken.split('.')[1]));
-                    if (payload.exp * 1000 > Date.now()) { // Check if token is expired
-                        window.location.href = "test.html";
-                    } else {
-                        sessionStorage.removeItem("access_token"); // Clear expired token
-                    }
-                } catch (error) {
-                    console.error("Failed to decode token:", error);
-                    sessionStorage.removeItem("access_token"); // Clear invalid token
-                }
-            }
-        });
-    </script>
     <script src="test.js"></script>
 </body>
 </html>

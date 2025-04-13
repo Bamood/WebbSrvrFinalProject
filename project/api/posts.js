@@ -24,9 +24,16 @@ router.delete("/:id", verifyToken, (req, res) => {
     const { id } = req.params;
     const { username } = req.user;
 
+    console.log(`Delete request for post ID: ${id} by user: ${username}`); // Debugging log
+
     db.query("DELETE FROM posts WHERE id = ? AND user = ?", [id, username], (err, result) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        if (result.affectedRows === 0) return res.status(404).json({ error: "Post not found or you do not own this post" });
+        if (err) {
+            console.error("Database error during post deletion:", err); // Debugging log
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Post not found or you do not own this post" });
+        }
         res.json({ message: "Post deleted successfully" });
     });
 });
@@ -50,14 +57,12 @@ router.get("/:id", verifyToken, (req, res) => {
 });
 
 router.get("/", verifyToken, (req, res) => {
-    db.query("SELECT id, user, title, created FROM posts ORDER BY created DESC", (err, results) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        res.json(results.map(post => ({
-            id: post.id,
-            user: post.user,
-            title: post.title,
-            created: post.created
-        })));
+    db.query("SELECT id, title, content, user, created FROM posts", (err, results) => {
+        if (err) {
+            console.error("Database error:", err); // Log the error
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json(results); // Ensure the content field is included
     });
 });
 
