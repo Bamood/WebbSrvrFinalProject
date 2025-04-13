@@ -408,6 +408,16 @@ return;
         window.location.href = "accManagement.html";
     });
 
+    // Add event listener for the "Register" redirect button
+    document.getElementById("registerRedirectButton")?.addEventListener("click", () => {
+        window.location.href = "register.html";
+    });
+
+    // Add event listener for the "Login" redirect button
+    document.getElementById("loginRedirectButton")?.addEventListener("click", () => {
+        window.location.href = "login.html";
+    });
+
     async function loadPosts() {
         console.log("Loading posts..."); // Debugging log
         const token = sessionStorage.getItem("access_token");

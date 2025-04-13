@@ -23,6 +23,10 @@ form {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+form button {
+    margin-bottom: 10px; /* Add space between buttons */
+}
+
 label {
     display: block;
     margin-bottom: 5px;
@@ -380,5 +384,22 @@ back:hover {
 
 .hidden {
     display: none !important;
+}
+
+#loginRedirectButton {
+    display: block;
+    width: 100%; /* Match the width of the "Register" button */
+    padding: 10px;
+    background-color: #6c757d; /* Match the gray background */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px; /* Match the font size */
+    text-align: center;
+}
+
+#loginRedirectButton:hover {
+    background-color: #5a6268; /* Darker gray on hover */
 }
 
