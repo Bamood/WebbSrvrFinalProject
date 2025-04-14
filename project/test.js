@@ -106,43 +106,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("postForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const title = document.getElementById("postTitle").value;
-        const content = document.getElementById("postContent").value;
+        const title = document.getElementById("postTitle").value.trim();
+        const content = document.getElementById("postContent").value.trim();
         let token = sessionStorage.getItem("access_token");
+
+        // Validate input before sending the request
+        if (title.length === 0 || title.length > 100) {
+            alert("Title must be between 1 and 100 characters.");
+            return;
+        }
+        if (content.length === 0) {
+            alert("Content cannot be empty.");
+            return;
+        }
 
         if (!token || isTokenExpired(token)) {
             alert("Your session has expired. Please log in again.");
             window.location.href = "login.html";
-return;
-}
-
-        let response = await fetch("http://localhost:8000/api/posts", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token,
-            },
-            body: JSON.stringify({ title, content }),
-        });
-
-        if (response.status === 401 || response.status === 403) {
-            if (await refreshToken()) {
-                response = await fetch("http://localhost:8000/api/posts", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + sessionStorage.getItem("access_token"),
-                    },
-                    body: JSON.stringify({ title, content }),
-                });
-            }
+            return;
         }
 
-        const data = await response.json();
-        alert(response.ok ? "Post created successfully!" : "Error: " + (data.error || "Unknown error"));
+        try {
+            let response = await fetch("http://localhost:8000/api/posts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token,
+                },
+                body: JSON.stringify({ title, content }),
+            });
 
-        if (response.ok) {
-            loadPosts();
+            if (response.status === 400) {
+                const errorData = await response.json();
+                console.error("Error:", errorData.error); // Log the error message
+                alert("Error: " + errorData.error);
+                return;
+            }
+
+            if (response.status === 401 || response.status === 403) {
+                if (await refreshToken()) {
+                    response = await fetch("http://localhost:8000/api/posts", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + sessionStorage.getItem("access_token"),
+                        },
+                        body: JSON.stringify({ title, content }),
+                    });
+                }
+            }
+
+            const data = await response.json();
+            alert(response.ok ? "Post created successfully!" : "Error: " + (data.error || "Unknown error"));
+
+            if (response.ok) {
+                loadPosts();
+            }
+        } catch (error) {
+            console.error("Fetch error:", error); // Log unexpected errors
+            alert("An error occurred while creating the post. Please try again.");
         }
     });
 
@@ -505,12 +527,12 @@ return;
             });
 
             if (response.status === 404) {
-                commentsListDiv.innerHTML = '<p>No comments yet.</p>';
+                commentsListDiv.innerHTML = '<p>No comments yet. Be the first!</p>';
                 return;
             }
 
             if (!response.ok) {
-                commentsListDiv.innerHTML = '<p>Could not load comments.</p>';
+                commentsListDiv.innerHTML = '<p>No comments yet. Be the first!</p>';
                 return;
             }
 
@@ -521,7 +543,7 @@ return;
             commentsListDiv.innerHTML = '';
 
             if (comments.length === 0) {
-                commentsListDiv.innerHTML = '<p>No comments yet.</p>';
+                commentsListDiv.innerHTML = '<p>No comments yet. Be the first!</p>';
             } else {
                 comments.forEach(comment => {
                     const commentElement = document.createElement('div');
@@ -565,7 +587,7 @@ return;
             }
         } catch (error) {
             console.error("Error loading comments:", error);
-            commentsListDiv.innerHTML = '<p>Error loading comments.</p>';
+            commentsListDiv.innerHTML = '<p>No comments yet. Be the first!</p>';
         }
     }
 
@@ -806,7 +828,7 @@ return;
                 });
 
                 if (!response.ok) {
-                    commentsListDiv.innerHTML = '<p>Could not load comments.</p>';
+                    commentsListDiv.innerHTML = '<p>No comments yet. Be the first!</p>';
                     return;
                 }
 
@@ -817,7 +839,7 @@ return;
                 commentsListDiv.innerHTML = '';
 
                 if (comments.length === 0) {
-                    commentsListDiv.innerHTML = '<p>No comments yet.</p>';
+                    commentsListDiv.innerHTML = '<p>No comments yet. Be the first!</p>';
                 } else {
                     comments.forEach(comment => {
                         const commentElement = document.createElement('div');
@@ -861,7 +883,7 @@ return;
                 }
             } catch (error) {
                 console.error("Error loading comments:", error);
-                commentsListDiv.innerHTML = '<p>Error loading comments.</p>';
+                commentsListDiv.innerHTML = '<p>No comments yet. Be the first!</p>';
             }
         }
 

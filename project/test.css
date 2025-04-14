@@ -200,6 +200,10 @@ back:hover {
     background: #fff;
     position: relative;
     cursor: pointer; /* Add pointer cursor to indicate clickability */
+    word-wrap: break-word; /* Ensure long words break to fit within the container */
+    overflow-wrap: break-word; /* Alternative for better browser support */
+    overflow: hidden; /* Prevent content from overflowing the container */
+    text-overflow: ellipsis; /* Add ellipsis for truncated text, if needed */
 }
 
 .post-item:hover {
@@ -401,5 +405,19 @@ back:hover {
 
 #loginRedirectButton:hover {
     background-color: #5a6268; /* Darker gray on hover */
+}
+
+#postTitle {
+    word-wrap: break-word; /* Ensure long words break to fit within the container */
+    overflow-wrap: break-word; /* Alternative for better browser support */
+    overflow: hidden; /* Prevent content from overflowing the container */
+    text-overflow: ellipsis; /* Add ellipsis for truncated text, if needed */
+}
+
+#postContent {
+    word-wrap: break-word; /* Ensure long words break to fit within the container */
+    overflow-wrap: break-word; /* Alternative for better browser support */
+    overflow: hidden; /* Prevent content from overflowing the container */
+    text-overflow: ellipsis; /* Add ellipsis for truncated text, if needed */
 }
 

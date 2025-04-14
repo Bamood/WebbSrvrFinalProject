@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/",
     verifyToken,
     validateRequest([
-        body("title").isLength({ min: 1, max: 100 }).trim().escape().withMessage("Title must be between 1 and 100 characters."),
+        body("title").isLength({ min: 1, max: 100 }).trim().escape().withMessage("Title must have a maximum of 100 characters."),
         body("content").isLength({ min: 1 }).trim().escape().withMessage("Content cannot be empty.")
     ]),
     (req, res) => {
@@ -15,7 +15,12 @@ router.post("/",
         const { username } = req.user;
 
         db.query("INSERT INTO posts (user, title, content) VALUES (?, ?, ?)", [username, title, content], (err) => {
-            if (err) return res.status(500).json({ error: "Database error" });
+            if (err) {
+                if (err.code === "ER_DATA_TOO_LONG") { // Handle MySQL "data too long" error
+                    return res.status(400).json({ error: "Title exceeds the maximum length of 100 characters." });
+                }
+                return res.status(500).json({ error: "Database error" });
+            }
             res.status(201).json({ message: "Post created successfully" });
         });
     });
