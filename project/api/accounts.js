@@ -2,7 +2,7 @@ const express = require("express");
 const argon2 = require("argon2");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken, generateTokens, refreshToken } = require("./tokenManager");
+const { validateRequest, verifyToken, generateTokens, refreshToken, autoLogin } = require("./tokenManager");
 const router = express.Router();
 require("dotenv").config();
 
@@ -135,5 +135,7 @@ router.post("/logout", (req, res) => {
     res.clearCookie("refresh_token", { httpOnly: true, secure: false, sameSite: "lax" });
     res.status(200).json({ message: "Logged out successfully" });
 });
+
+router.post("/auto-login", autoLogin); // Add the auto-login route
 
 module.exports = router;

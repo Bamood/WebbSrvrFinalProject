@@ -9,6 +9,31 @@ document.addEventListener("DOMContentLoaded", () => {
         return payload.exp * 1000 <= Date.now();
     };
 
+    async function autoLogin(req, res) {
+        const refreshToken = req.cookies?.refresh_token; // Retrieve the refresh token from the cookie
+        if (!refreshToken) {
+            return res.status(401).json({ error: "No refresh token provided" });
+        }
+    
+        try {
+            const payload = validateRefreshToken(refreshToken);
+            if (!payload) {
+                return res.status(401).json({ error: "Invalid refresh token" });
+            }
+    
+            const newAccessToken = jwt.sign(
+                { username: payload.username },
+                ACCESS_TOKEN_SECRET,
+                { expiresIn: "2m" }
+            );
+    
+            res.json({ access_token: newAccessToken });
+        } catch (error) {
+            console.error("Error during auto-login:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
+    }
+
     async function refreshToken() {
         try {
             const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
@@ -607,6 +632,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 sessionStorage.removeItem("access_token"); // Clear invalid token
             }
         }
+
+        const autoLogin = async () => {
+            try {
+                const response = await fetch("http://localhost:8000/api/accounts/auto-login", {
+                    method: "POST",
+                    credentials: "include", // Include cookies
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    sessionStorage.setItem("access_token", data.access_token); // Store the new access token
+                    window.location.href = "test.html"; // Redirect to the dashboard
+                }
+            } catch (error) {
+                console.error("Auto-login failed:", error); // Log any errors
+            }
+        };
+
+        autoLogin(); // Attempt auto-login
     }
 
     // Handle welcome message and redirection for test.html

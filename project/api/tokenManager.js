@@ -72,11 +72,37 @@ async function handleRefreshToken(req, res) {
     res.json({ access_token: newAccessToken });
 }
 
+async function autoLogin(req, res) {
+    const refreshToken = req.cookies?.refresh_token; // Retrieve the refresh token from the cookie
+    if (!refreshToken) {
+        return res.status(401).json({ error: "No refresh token provided" });
+    }
+
+    try {
+        const payload = validateRefreshToken(refreshToken);
+        if (!payload) {
+            return res.status(401).json({ error: "Invalid refresh token" });
+        }
+
+        const newAccessToken = jwt.sign(
+            { username: payload.username },
+            ACCESS_TOKEN_SECRET,
+            { expiresIn: "2m" }
+        );
+
+        res.json({ access_token: newAccessToken });
+    } catch (error) {
+        console.error("Error during auto-login:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
 module.exports = { 
     validateRequest, 
     verifyToken, 
     generateTokens, 
     refreshToken, 
     validateRefreshToken, 
-    handleRefreshToken
+    handleRefreshToken,
+    autoLogin // Export the new function
 };
