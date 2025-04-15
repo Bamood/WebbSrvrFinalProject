@@ -53,9 +53,9 @@ router.get("/:id", verifyToken, (req, res) => {
         const post = results[0];
         res.json({
             id: post.id,
-            user: post.user,
-            title: post.title,
-            content: post.content,
+            user: escape(post.user), // Escape output
+            title: escape(post.title), // Escape output
+            content: escape(post.content), // Escape output
             created: post.created
         });
     });
