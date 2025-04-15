@@ -1,10 +1,8 @@
 const express = require("express");
-const csrf = require("csurf");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
 const { validateRequest, verifyToken } = require("./tokenManager"); // Removed encodeHTML
 const router = express.Router();
-const csrfProtection = csrf({ cookie: true });
 
 router.post("/",
     verifyToken,
@@ -29,7 +27,7 @@ router.post("/",
         });
     });
 
-router.delete("/:id", verifyToken, (req, res) => { // Removed csrfProtection
+router.delete("/:id", verifyToken, (req, res) => {
     const { id } = req.params;
     const { username } = req.user;
 
@@ -52,12 +50,13 @@ router.get("/:postId", verifyToken, (req, res) => {
 
     db.query("SELECT * FROM comments WHERE postId = ?", [postId], (err, results) => {
         if (err) return res.status(500).json({ error: "Database error" });
-        // Return an empty array if no comments are found
+        if (results.length === 0) return res.status(404).json({ error: "No comments found for this post" });
+
         res.json(results.map(comment => ({
             id: comment.id,
             postId: comment.postId,
-            user: escape(comment.user), // Escape output
-            comment: escape(comment.comment), // Escape output
+            user: comment.user,
+            comment: comment.comment,
             created_at: comment.created_at
         })));
     });

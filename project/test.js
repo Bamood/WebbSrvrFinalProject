@@ -36,21 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function refreshToken() {
         try {
-            // Fetch the CSRF token
-            const csrfResponse = await fetch("http://localhost:8000/api/csrf-token", {
-                credentials: "include",
-            });
-            const { csrfToken } = await csrfResponse.json();
-
-            // Make the POST request to refresh the token
             const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
                 method: "POST",
                 credentials: "include", // Include the refresh token cookie
-                headers: {
-                    "Content-Type": "application/json", // Ensure Content-Type is set
-                    "CSRF-Token": csrfToken, // Include the CSRF token in the header
-                },
-                body: JSON.stringify({}), // Send an empty body if required
             });
 
             if (response.ok) {
@@ -88,15 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function handleError(response) {
         const data = await response.json();
-        alert("Error: " + sanitizeHTML(data.error || "Unknown error")); // Sanitize error messages
-    }
-
-    async function getCsrfToken() {
-        const response = await fetch("http://localhost:8000/api/csrf-token", {
-            credentials: "include",
-        });
-        const data = await response.json();
-        return data.csrfToken;
+        alert("Error: " + (data.error || "Unknown error"));
     }
 
     document.getElementById("registerForm")?.addEventListener("submit", async (event) => {
@@ -125,20 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = document.getElementById("loginPassword").value;
 
         try {
-            // Fetch the CSRF token
-            const csrfResponse = await fetch("http://localhost:8000/api/csrf-token", {
-                credentials: "include",
-            });
-            const { csrfToken } = await csrfResponse.json();
-
-            // Make the login request with the CSRF token
             const response = await fetch("http://localhost:8000/api/accounts/login", {
                 method: "POST",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken, // Include the CSRF token in the header
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
             });
 
@@ -161,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("postForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const csrfToken = await getCsrfToken(); // Fetch the CSRF token
         const title = document.getElementById("postTitle").value.trim();
         const content = document.getElementById("postContent").value.trim();
         let token = sessionStorage.getItem("access_token");
@@ -188,7 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": "Bearer " + token,
-                    "CSRF-Token": csrfToken, // Include the CSRF token in the header
                 },
                 body: JSON.stringify({ title, content }),
             });
@@ -207,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": "Bearer " + sessionStorage.getItem("access_token"),
-                            "CSRF-Token": csrfToken, // Include the CSRF token in the header
                         },
                         body: JSON.stringify({ title, content }),
                     });
@@ -283,39 +250,17 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log(`Attempting to delete comment with ID: ${commentId}`); // Debugging log
 
         try {
-            // Fetch the CSRF token
-            const csrfResponse = await fetch("http://localhost:8000/api/csrf-token", {
-                credentials: "include",
-            });
-
-            if (!csrfResponse.ok) {
-                console.error("Failed to fetch CSRF token:", await csrfResponse.text()); // Debugging log
-                alert("Failed to fetch CSRF token. Please try again.");
-                return;
-            }
-
-            const { csrfToken } = await csrfResponse.json();
-            console.log("Fetched CSRF token:", csrfToken); // Debugging log
-
-            // Make the DELETE request with the CSRF token
-            const deleteResponse = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
+            const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
                 method: "DELETE",
-                headers: {
-                    "Authorization": "Bearer " + token,
-                    "CSRF-Token": csrfToken, // Include the CSRF token
-                },
+                headers: { "Authorization": "Bearer " + token },
             });
 
-            if (!deleteResponse.ok) {
-                console.error("Failed to delete comment:", await deleteResponse.text()); // Debugging log
-            }
-
-            const data = await deleteResponse.json();
+            const data = await response.json();
             console.log("Delete comment response:", data); // Debugging log
 
-            alert(deleteResponse.ok ? "Comment deleted successfully!" : "Error: " + (data.error || "Unknown error"));
+            alert(response.ok ? "Comment deleted successfully!" : "Error: " + (data.error || "Unknown error"));
 
-            if (deleteResponse.ok) {
+            if (response.ok) {
                 const postId = new URLSearchParams(window.location.search).get("id");
                 loadComments(postId, token);
             }
@@ -394,27 +339,17 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log(`Attempting to delete comment with ID: ${commentId}`); // Debugging log
 
         try {
-            // Fetch the CSRF token
-            const csrfResponse = await fetch("http://localhost:8000/api/csrf-token", {
-                credentials: "include",
-            });
-            const { csrfToken } = await csrfResponse.json();
-
-            // Make the DELETE request with the CSRF token
-            const deleteResponse = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
+            const response = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
                 method: "DELETE",
-                headers: {
-                    "Authorization": "Bearer " + token,
-                    "CSRF-Token": csrfToken, // Include the CSRF token
-                },
+                headers: { "Authorization": "Bearer " + token },
             });
 
-            const data = await deleteResponse.json();
+            const data = await response.json();
             console.log("Delete comment response:", data); // Debugging log
 
-            alert(deleteResponse.ok ? "Comment deleted successfully!" : "Error: " + (data.error || "Unknown error"));
+            alert(response.ok ? "Comment deleted successfully!" : "Error: " + (data.error || "Unknown error"));
 
-            if (deleteResponse.ok) {
+            if (response.ok) {
                 const postId = new URLSearchParams(window.location.search).get("id");
                 loadComments(postId, token);
             }
@@ -530,13 +465,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "login.html";
     });
 
-    // Custom sanitization function to escape HTML
-    function sanitizeHTML(str) {
-        const tempDiv = document.createElement("div");
-        tempDiv.textContent = str;
-        return tempDiv.innerHTML;
-    }
-
     async function loadPosts() {
         console.log("Loading posts..."); // Debugging log
         const token = sessionStorage.getItem("access_token");
@@ -580,10 +508,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 postElement.style.cursor = "pointer"; // Ensure the post is visually clickable
                 const createdDate = new Date(post.created).toLocaleString(); // Format the creation date
                 postElement.innerHTML = `
-                    <strong>${sanitizeHTML(post.title)}</strong> (by ${sanitizeHTML(post.user)})
+                    <strong>${post.title}</strong> (by ${post.user})
                     <br>
-                    <small>Created on: ${sanitizeHTML(createdDate)}</small>
-                `; // Sanitize content before inserting into DOM
+                    <small>Created on: ${createdDate}</small>
+                `;
 
                 // Add click event listener to redirect to post.html with the post ID
                 postElement.addEventListener('click', () => {
@@ -647,8 +575,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     commentElement.classList.add('comment-item');
                     const commentDate = new Date(comment.created_at).toLocaleString();
                     commentElement.innerHTML = `
-                        <p><strong>${sanitizeHTML(comment.user)}:</strong> ${sanitizeHTML(comment.comment)}</p>
-                        <small>Posted on: ${sanitizeHTML(commentDate)}</small>
+                        <p><strong>${comment.user}:</strong> ${comment.comment}</p>
+                        <small>Posted on: ${commentDate}</small>
                     `;
 
                     // Add delete button if the current user is the owner
@@ -659,19 +587,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         deleteButton.addEventListener('click', async () => {
                             if (confirm("Are you sure you want to delete this comment?")) {
                                 try {
-                                    // Fetch the CSRF token
-                                    const csrfResponse = await fetch("http://localhost:8000/api/csrf-token", {
-                                        credentials: "include",
-                                    });
-                                    const { csrfToken } = await csrfResponse.json();
-
-                                    // Make the DELETE request with the CSRF token
                                     const deleteResponse = await fetch(`http://localhost:8000/api/comments/${comment.id}`, {
                                         method: "DELETE",
-                                        headers: {
-                                            "Authorization": "Bearer " + token,
-                                            "CSRF-Token": csrfToken, // Include the CSRF token
-                                        },
+                                        headers: { "Authorization": "Bearer " + token },
                                     });
 
                                     if (deleteResponse.ok) {
@@ -972,8 +890,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         commentElement.classList.add('comment-item');
                         const commentDate = new Date(comment.created_at).toLocaleString();
                         commentElement.innerHTML = `
-                            <p><strong>${sanitizeHTML(comment.user)}:</strong> ${sanitizeHTML(comment.comment)}</p>
-                            <small>Posted on: ${sanitizeHTML(commentDate)}</small>
+                            <p><strong>${comment.user}:</strong> ${comment.comment}</p>
+                            <small>Posted on: ${commentDate}</small>
                         `;
 
                         // Add delete button if the current user is the owner
@@ -984,19 +902,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             deleteButton.addEventListener('click', async () => {
                                 if (confirm("Are you sure you want to delete this comment?")) {
                                     try {
-                                        // Fetch the CSRF token
-                                        const csrfResponse = await fetch("http://localhost:8000/api/csrf-token", {
-                                            credentials: "include",
-                                        });
-                                        const { csrfToken } = await csrfResponse.json();
-
-                                        // Make the DELETE request with the CSRF token
                                         const deleteResponse = await fetch(`http://localhost:8000/api/comments/${comment.id}`, {
                                             method: "DELETE",
-                                            headers: {
-                                                "Authorization": "Bearer " + token,
-                                                "CSRF-Token": csrfToken, // Include the CSRF token
-                                            },
+                                            headers: { "Authorization": "Bearer " + token },
                                         });
 
                                         if (deleteResponse.ok) {
@@ -1027,53 +935,35 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("addCommentForm")?.addEventListener("submit", async (event) => {
             event.preventDefault();
             const commentContent = document.getElementById("commentContent").value.trim();
-            const postId = new URLSearchParams(window.location.search).get("id");
-            const token = sessionStorage.getItem("access_token");
-        
+
             if (!commentContent) {
                 alert("Comment cannot be empty.");
                 return;
             }
-        
-            if (!token || isTokenExpired(token)) {
-                alert("Your session has expired. Please log in again.");
-                window.location.href = "login.html";
-                return;
-            }
-        
+
             try {
-                // Fetch the CSRF token
-                const csrfResponse = await fetch("http://localhost:8000/api/csrf-token", {
-                    credentials: "include",
-                });
-                const { csrfToken } = await csrfResponse.json();
-        
-                // Make the POST request to create a comment
                 const response = await fetch("http://localhost:8000/api/comments", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": "Bearer " + token,
-                        "CSRF-Token": csrfToken, // Include the CSRF token in the header
                     },
                     body: JSON.stringify({ postId: parseInt(postId, 10), comment: commentContent }),
                 });
-        
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    alert("Error: " + (errorData.error || "Unknown error"));
+                    alert("Failed to add comment.");
                     return;
                 }
-        
+
                 alert("Comment added successfully!");
                 document.getElementById("commentContent").value = ""; // Clear the input
-                loadComments(postId, token); // Reload comments
+                loadComments(); // Reload comments
             } catch (error) {
                 console.error("Error adding comment:", error);
                 alert("An error occurred while adding the comment.");
             }
         });
-        
 
         // Back button functionality
         document.getElementById("backButton")?.addEventListener("click", () => {

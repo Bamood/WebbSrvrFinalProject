@@ -3,12 +3,8 @@ const argon2 = require("argon2");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
 const { validateRequest, verifyToken, generateTokens, refreshToken, autoLogin } = require("./tokenManager");
-const csrf = require("csurf"); // Import the CSRF middleware
 const router = express.Router();
 require("dotenv").config();
-
-// Enable CSRF protection
-const csrfProtection = csrf({ cookie: true });
 
 router.post("/register",
     validateRequest([
@@ -63,20 +59,15 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.post("/refresh-token", csrfProtection, (req, res) => {
-    const refreshTokenCookie = req.cookies.refresh_token; // Rename the local variable
-
-    if (!refreshTokenCookie) {
+router.post("/refresh-token", (req, res) => {
+    const token = req.cookies.refresh_token; // Retrieve the refresh token from the cookie
+    if (!token) {
         return res.status(401).json({ error: "No refresh token provided" });
     }
 
-    refreshToken(refreshTokenCookie) // Call the imported refreshToken function
+    refreshToken(token) // Verify and generate new tokens
         .then(({ accessToken, newRefreshToken }) => {
-            res.cookie("refresh_token", newRefreshToken, {
-                httpOnly: true,
-                secure: true, // Only send over HTTPS
-                sameSite: "Strict", // Prevent cross-origin requests
-            });
+            res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: false, sameSite: "lax", maxAge: 12 * 60 * 60 * 1000 });
             res.json({ access_token: accessToken }); // Send the new access token to the client
         })
         .catch(() => res.status(401).json({ error: "Invalid refresh token" }));
