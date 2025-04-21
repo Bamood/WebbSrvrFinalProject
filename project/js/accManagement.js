@@ -1,0 +1,102 @@
+
+
+document.getElementById("showInfoButton")?.addEventListener("click", async () => {
+    const token = sessionStorage.getItem("access_token");
+    const isTokenExpired = (token) => {
+        const payload = decodeJWT(token);
+        return payload.exp * 1000 <= Date.now();
+    };
+
+    const decodeJWT = (token) => {
+        const payload = token.split('.')[1];
+        return JSON.parse(atob(payload));
+    };
+
+    if (!token || isTokenExpired(token)) {
+        alert("Your session has expired. Please log in again.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const response = await fetch("http://localhost:8000/api/accounts/info", {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + token,
+        },
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        document.getElementById("infoUsername").textContent = data.username;
+        document.getElementById("infoEmail").textContent = data.email;
+        document.getElementById("userInfo").classList.remove("hidden");
+    } else {
+        const errorData = await response.json();
+        alert("Error: " + (errorData.error || "Unknown error"));
+    }
+});
+
+document.getElementById("changePasswordForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const currentPassword = document.getElementById("currentPassword").value.trim();
+    const newPassword = document.getElementById("newPassword").value.trim();
+    const token = sessionStorage.getItem("access_token");
+
+    if (!currentPassword || !newPassword) {
+        alert("Both current and new passwords are required.");
+        return;
+    }
+
+    if (!token || isTokenExpired(token)) {
+        alert("Your session has expired. Please log in again.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const response = await fetch("http://localhost:8000/api/accounts/change-password", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    const data = await response.json();
+    alert(response.ok ? "Password changed successfully! Please log in again." : "Error: " + (data.error || "Unknown error"));
+
+    if (response.ok) {
+        sessionStorage.removeItem("access_token");
+        window.location.href = "login.html";
+    }
+});
+
+document.getElementById("deleteUserButton")?.addEventListener("click", async () => {
+    const token = sessionStorage.getItem("access_token");
+
+    if (!token || isTokenExpired(token)) {
+        alert("Your session has expired. Please log in again.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const response = await fetch("http://localhost:8000/api/accounts/delete", {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + token,
+        },
+    });
+
+    const data = await response.json();
+    alert(response.ok ? "User deleted successfully!" : "Error: " + (data.error || "Unknown error"));
+
+    if (response.ok) {
+        sessionStorage.removeItem("access_token");
+        window.location.href = "login.html";
+    }
+});
+
+document.getElementById("backToDashboardButton")?.addEventListener("click", () => {
+    window.location.href = "test.html";
+});
+

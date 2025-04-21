@@ -104,5 +104,5 @@ module.exports = {
     refreshToken, 
     validateRefreshToken, 
     handleRefreshToken,
-    autoLogin // Export the new function
+    autoLogin 
 };
