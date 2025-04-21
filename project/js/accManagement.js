@@ -97,6 +97,6 @@ document.getElementById("deleteUserButton")?.addEventListener("click", async () 
 });
 
 document.getElementById("backToDashboardButton")?.addEventListener("click", () => {
-    window.location.href = "test.html";
+    window.location.href = "main.html";
 });
 

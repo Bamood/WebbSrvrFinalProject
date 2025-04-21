@@ -21,7 +21,7 @@ document.getElementById("loginForm")?.addEventListener("submit", async (event) =
         const data = await response.json();
         sessionStorage.setItem("access_token", data.access_token);
         alert("Login successful!");
-        window.location.href = "test.html";
+        window.location.href = "main.html";
     } catch (error) {
         console.error("Error during login:", error);
         alert("An error occurred during login. Please try again later.");
@@ -34,7 +34,7 @@ if (window.location.pathname.endsWith("login.html")) {
         try {
             const payload = JSON.parse(atob(accessToken.split('.')[1]));
             if (payload.exp * 1000 > Date.now()) {
-                window.location.href = "test.html";
+                window.location.href = "main.html";
             } else {
                 sessionStorage.removeItem("access_token");
             }
@@ -54,7 +54,7 @@ if (window.location.pathname.endsWith("login.html")) {
             if (response.ok) {
                 const data = await response.json();
                 sessionStorage.setItem("access_token", data.access_token);
-                window.location.href = "test.html";
+                window.location.href = "main.html";
             }
         } catch (error) {
             console.error("Auto-login failed:", error);

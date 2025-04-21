@@ -198,13 +198,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Ensure loadPosts is only called on test.html
-    if (window.location.pathname.endsWith("test.html")) {
+    // Ensure loadPosts is only called on main.html
+    if (window.location.pathname.endsWith("main.html")) {
         loadPosts();
     }
     
-    // Handle welcome message and redirection for test.html
-    if (window.location.pathname.endsWith("test.html")) {
+    // Handle welcome message and redirection for main.html
+    if (window.location.pathname.endsWith("main.html")) {
         const accessToken = sessionStorage.getItem("access_token");
         console.log("Access token retrieved from sessionStorage:", accessToken); // Log the access token
 

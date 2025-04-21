@@ -12,7 +12,7 @@
 
     if (!postId) {
         alert("Invalid post ID. Redirecting to the dashboard...");
-        window.location.href = "test.html";
+        window.location.href = "main.html";
     }
 
     if (!token || isTokenExpired(token)) {
@@ -28,7 +28,7 @@
     
         if (!postId) {
             alert("Invalid post ID. Redirecting to the dashboard...");
-            window.location.href = "test.html";
+            window.location.href = "main.html";
              
         }
     
@@ -46,7 +46,7 @@
     
             if (!response.ok) {
                 alert("Failed to load post details. Redirecting to the dashboard...");
-                window.location.href = "test.html";
+                window.location.href = "main.html";
                  
             }
     
@@ -72,7 +72,7 @@
     
                             if (deleteResponse.ok) {
                                 alert("Post deleted successfully.");
-                                window.location.href = "test.html";
+                                window.location.href = "main.html";
                             } else {
                                 alert("Failed to delete post.");
                             }
@@ -88,7 +88,7 @@
         } catch (error) {
             console.error("Error loading post details:", error);
             alert("An error occurred while loading the post. Redirecting to the dashboard...");
-            window.location.href = "test.html";
+            window.location.href = "main.html";
         }
     }
     
@@ -200,7 +200,7 @@
 
     // Back button functionality
     document.getElementById("backButton")?.addEventListener("click", () => {
-        window.location.href = "test.html";
+        window.location.href = "main.html";
     });
 
     // Initial load
