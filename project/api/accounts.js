@@ -75,6 +75,7 @@ router.delete("/delete", verifyToken, (req, res) => {
     db.query("DELETE FROM users WHERE username = ?", [username], (err, result) => {
         if (err) return res.status(500).json({ error: "Database error" });
         if (result.affectedRows === 0) return res.status(404).json({ error: "User not found" });
+        res.clearCookie("refresh_token", { httpOnly: true, secure: false, sameSite: "lax" });
         res.json({ message: "User deleted successfully" });
     });
 });

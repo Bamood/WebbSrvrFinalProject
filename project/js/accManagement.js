@@ -1,15 +1,15 @@
+const decodeJWT = (token) => {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload));
+};
+
+const isTokenExpired = (token) => {
+    const payload = decodeJWT(token);
+    return payload.exp * 1000 <= Date.now();
+};
+
 document.getElementById("showInfoButton")?.addEventListener("click", async () => {
     const token = sessionStorage.getItem("access_token");
-    const isTokenExpired = (token) => {
-        const payload = decodeJWT(token);
-        return payload.exp * 1000 <= Date.now();
-    };
-
-    const decodeJWT = (token) => {
-        const payload = token.split('.')[1];
-        return JSON.parse(atob(payload));
-    };
-
     if (!token || isTokenExpired(token)) {
         alert("Your session has expired. Please log in again.");
         window.location.href = "login.html";
