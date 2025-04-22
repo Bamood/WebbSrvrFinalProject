@@ -1,7 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const db = require("./sqlConnector");
-const { validateRequest, verifyToken } = require("./tokenManager"); // Removed encodeHTML
+const { validateRequest, verifyToken } = require("./tokenManager");
 const router = express.Router();
 
 router.post("/",
@@ -14,12 +14,10 @@ router.post("/",
         const { postId, comment } = req.body;
         const { username } = req.user;
 
-        // Check if the postId exists in the posts table
         db.query("SELECT id FROM posts WHERE id = ?", [postId], (err, results) => {
             if (err) return res.status(500).json({ error: "Database error" });
             if (results.length === 0) return res.status(404).json({ error: "Post not found" });
 
-            // Insert the comment if the post exists
             db.query("INSERT INTO comments (postId, user, comment) VALUES (?, ?, ?)", [postId, username, comment], (err) => {
                 if (err) return res.status(500).json({ error: "Database error" });
                 res.status(201).json({ message: "Comment created successfully" });
@@ -31,11 +29,8 @@ router.delete("/:id", verifyToken, (req, res) => {
     const { id } = req.params;
     const { username } = req.user;
 
-    console.log(`Delete request for comment ID: ${id} by user: ${username}`); // Debugging log
-
     db.query("DELETE FROM comments WHERE id = ? AND user = ?", [id, username], (err, result) => {
         if (err) {
-            console.error("Database error during comment deletion:", err); // Debugging log
             return res.status(500).json({ error: "Database error" });
         }
         if (result.affectedRows === 0) {

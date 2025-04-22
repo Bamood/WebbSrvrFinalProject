@@ -16,7 +16,7 @@ router.post("/",
 
         db.query("INSERT INTO posts (user, title, content) VALUES (?, ?, ?)", [username, title, content], (err) => {
             if (err) {
-                if (err.code === "ER_DATA_TOO_LONG") { // Handle MySQL "data too long" error
+                if (err.code === "ER_DATA_TOO_LONG") {
                     return res.status(400).json({ error: "Title exceeds the maximum length of 100 characters." });
                 }
                 return res.status(500).json({ error: "Database error" });
@@ -29,11 +29,8 @@ router.delete("/:id", verifyToken, (req, res) => {
     const { id } = req.params;
     const { username } = req.user;
 
-    console.log(`Delete request for post ID: ${id} by user: ${username}`); // Debugging log
-
     db.query("DELETE FROM posts WHERE id = ? AND user = ?", [id, username], (err, result) => {
         if (err) {
-            console.error("Database error during post deletion:", err); // Debugging log
             return res.status(500).json({ error: "Database error" });
         }
         if (result.affectedRows === 0) {
@@ -64,10 +61,9 @@ router.get("/:id", verifyToken, (req, res) => {
 router.get("/", verifyToken, (req, res) => {
     db.query("SELECT id, title, content, user, created FROM posts", (err, results) => {
         if (err) {
-            console.error("Database error:", err); // Log the error
             return res.status(500).json({ error: "Database error" });
         }
-        res.json(results); // Ensure the content field is included
+        res.json(results);
     });
 });
 

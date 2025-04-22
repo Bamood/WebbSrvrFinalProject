@@ -38,15 +38,11 @@ const generateTokens = (user) => {
 
 const refreshToken = (refreshToken) => {
     return new Promise((resolve, reject) => {
-        console.log("Received refresh token:", refreshToken); // Debug log
         jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, decoded) => {
             if (err) {
-                console.error("Refresh token verification failed:", err); // Debug log
                 return reject("Invalid refresh token");
             }
-            console.log("Refresh token decoded payload:", decoded); // Debug log
             const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded);
-            console.log("Generated new tokens:", { accessToken, newRefreshToken }); // Debug log
             resolve({ accessToken, newRefreshToken });
         });
     });
@@ -73,7 +69,7 @@ async function handleRefreshToken(req, res) {
 }
 
 async function autoLogin(req, res) {
-    const refreshToken = req.cookies?.refresh_token; // Retrieve the refresh token from the cookie
+    const refreshToken = req.cookies?.refresh_token;
     if (!refreshToken) {
         return res.status(401).json({ error: "No refresh token provided" });
     }
@@ -92,7 +88,6 @@ async function autoLogin(req, res) {
 
         res.json({ access_token: newAccessToken });
     } catch (error) {
-        console.error("Error during auto-login:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 }

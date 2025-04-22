@@ -1,5 +1,3 @@
-
-
 document.getElementById("showInfoButton")?.addEventListener("click", async () => {
     const token = sessionStorage.getItem("access_token");
     const isTokenExpired = (token) => {

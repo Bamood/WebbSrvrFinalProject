@@ -35,10 +35,7 @@ router.post("/login", (req, res) => {
     const { username, password } = req.body;
 
     db.query("SELECT * FROM users WHERE username = ?", [username], (err, results) => {
-        if (err) {
-            console.error("Database error during login:", err); // Log the error
-            return res.status(500).json({ error: "Internal server error" });
-        }
+        if (err) return res.status(500).json({ error: "Internal server error" });
         if (results.length === 0) {
             return res.status(400).json({ error: "Invalid username or password" });
         }
@@ -53,22 +50,21 @@ router.post("/login", (req, res) => {
             res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: false, sameSite: "lax", maxAge: 12 * 60 * 60 * 1000, path: "/" });
             res.status(200).json({ access_token: accessToken });
         }).catch(err => {
-            console.error("Error verifying password:", err); // Log the error
             res.status(500).json({ error: "Internal server error" });
         });
     });
 });
 
 router.post("/refresh-token", (req, res) => {
-    const token = req.cookies.refresh_token; // Retrieve the refresh token from the cookie
+    const token = req.cookies.refresh_token;
     if (!token) {
         return res.status(401).json({ error: "No refresh token provided" });
     }
 
-    refreshToken(token) // Verify and generate new tokens
+    refreshToken(token)
         .then(({ accessToken, newRefreshToken }) => {
             res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: false, sameSite: "lax", maxAge: 12 * 60 * 60 * 1000 });
-            res.json({ access_token: accessToken }); // Send the new access token to the client
+            res.json({ access_token: accessToken });
         })
         .catch(() => res.status(401).json({ error: "Invalid refresh token" }));
 });
@@ -136,6 +132,6 @@ router.post("/logout", (req, res) => {
     res.status(200).json({ message: "Logged out successfully" });
 });
 
-router.post("/auto-login", autoLogin); // Add the auto-login route
+router.post("/auto-login", autoLogin);
 
 module.exports = router;

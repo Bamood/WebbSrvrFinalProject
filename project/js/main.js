@@ -13,12 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
                 method: "POST",
-                credentials: "include",  //Include the refresh token cookie
+                credentials: "include",
             });
 
             if (response.ok) {
                 const data = await response.json();
-                sessionStorage.setItem("access_token", data.access_token); // Store the new access token
+                sessionStorage.setItem("access_token", data.access_token);
                 return true;
             } else {
                 sessionStorage.removeItem("access_token");
@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const content = document.getElementById("postContent").value.trim();
         let token = sessionStorage.getItem("access_token");
 
-        // Validate input before sending the request
         if (title.length === 0 || title.length > 100) {
             alert("Title must be between 1 and 100 characters.");
             return;
@@ -83,7 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (response.status === 400) {
                 const errorData = await response.json();
-                console.error("Error:", errorData.error); // Log the error message
                 alert("Error: " + errorData.error);
                 return;
             }
@@ -108,7 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadPosts();
             }
         } catch (error) {
-            console.error("Fetch error:", error); // Log unexpected errors
             alert("An error occurred while creating the post. Please try again.");
         }
     });
@@ -128,20 +125,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Add event listener for the "Manage Account" button
     document.getElementById("accManagementButton")?.addEventListener("click", () => {
         window.location.href = "accManagement.html";
     });
 
     async function loadPosts() {
-        console.log("Loading posts..."); // Debugging log
         const token = sessionStorage.getItem("access_token");
         const postsListDiv = document.getElementById("postsList");
 
-        // Check if postsListDiv exists
         if (!postsListDiv) {
-            console.warn("postsList element not found. Skipping loadPosts."); // Debugging log
-            return; // Exit if the element is missing
+            return;
         }
 
         if (!token || isTokenExpired(token)) {
@@ -161,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const posts = await response.json();
-            console.log("API response:", posts); // Debugging log
 
             postsListDiv.innerHTML = '';
 
@@ -173,54 +165,42 @@ document.addEventListener("DOMContentLoaded", () => {
             posts.forEach(post => {
                 const postElement = document.createElement('div');
                 postElement.classList.add('post-item');
-                postElement.style.cursor = "pointer"; // Ensure the post is visually clickable
-                const createdDate = new Date(post.created).toLocaleString(); // Format the creation date
+                postElement.style.cursor = "pointer";
+                const createdDate = new Date(post.created).toLocaleString();
                 postElement.innerHTML = `
                     <strong>${post.title}</strong> (by ${post.user})
                     <br>
                     <small>Created on: ${createdDate}</small>
                 `;
 
-                // Add click event listener to redirect to post.html with the post ID
                 postElement.addEventListener('click', () => {
-                    console.log(`Post clicked: ${post.title}`); // Debugging log
-                    console.log(`Post content: ${post.content}`); // Debugging log
-
-                    // Redirect to post.html with the post ID as a query parameter
                     window.location.href = `post.html?id=${post.id}`;
                 });
 
                 postsListDiv.appendChild(postElement);
             });
         } catch (error) {
-            console.error("Error loading posts:", error); // Debugging log
             postsListDiv.innerHTML = '<p>Error loading posts.</p>';
         }
     }
 
-    // Ensure loadPosts is only called on main.html
     if (window.location.pathname.endsWith("main.html")) {
         loadPosts();
     }
-    
-    // Handle welcome message and redirection for main.html
+
     if (window.location.pathname.endsWith("main.html")) {
         const accessToken = sessionStorage.getItem("access_token");
-        console.log("Access token retrieved from sessionStorage:", accessToken); // Log the access token
 
         if (!accessToken) {
-            console.log("No access token found. Redirecting to login page."); // Log missing token
             window.location.href = "login.html";
             return;
         }
 
         try {
             const payload = JSON.parse(atob(accessToken.split('.')[1]));
-            console.log("Decoded access token payload:", payload); // Log the decoded payload
             const username = payload.username;
             document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
         } catch (error) {
-            console.error("Failed to decode access token:", error); // Log decoding error
             sessionStorage.removeItem("access_token");
             window.location.href = "login.html";
         }

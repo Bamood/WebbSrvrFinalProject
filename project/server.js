@@ -5,7 +5,6 @@ const path = require("path");
 const accountRoutes = require("./api/accounts");
 const postRoutes = require("./api/posts");
 const commentRoutes = require("./api/comments");
-const { autoLogin } = require("./api/tokenManager");
 
 const app = express();
 const PORT = 8000;
@@ -28,7 +27,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve static files (frontend)
 app.use(express.static(path.join(__dirname, "../project")));
 
 app.use("/api/accounts", accountRoutes);
