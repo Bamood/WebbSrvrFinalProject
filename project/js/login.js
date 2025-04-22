@@ -20,7 +20,6 @@ document.getElementById("loginForm")?.addEventListener("submit", async (event) =
 
         const data = await response.json();
         sessionStorage.setItem("access_token", data.access_token);
-        alert("Login successful!");
         window.location.href = "main.html";
     } catch (error) {
         console.error("Error during login:", error);

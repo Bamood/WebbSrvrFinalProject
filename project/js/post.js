@@ -64,7 +64,6 @@ async function loadPostDetails() {
                         });
 
                         if (deleteResponse.ok) {
-                            alert("Post deleted successfully.");
                             window.location.href = "main.html";
                         } else {
                             alert("Failed to delete post.");
@@ -130,7 +129,6 @@ async function loadComments() {
                                 });
 
                                 if (deleteResponse.ok) {
-                                    alert("Comment deleted successfully.");
                                     loadComments(postId, token);
                                 } else {
                                     alert("Failed to delete comment.");
@@ -174,8 +172,6 @@ document.getElementById("addCommentForm")?.addEventListener("submit", async (eve
         if (!response.ok) {
             alert("Failed to add comment.");
         }
-
-        alert("Comment added successfully!");
         document.getElementById("commentContent").value = "";
         loadComments();
     } catch (error) {

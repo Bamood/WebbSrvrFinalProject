@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return false;
             }
         } catch (error) {
-            alert("An error occurred while refreshing the token. Please log in again.");
+            alert("Please log in again.");
             window.location.href = "login.html";
             return false;
         }
@@ -98,9 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
             }
-
-            const data = await response.json();
-            alert(response.ok ? "Post created successfully!" : "Error: " + (data.error || "Unknown error"));
 
             if (response.ok) {
                 loadPosts();
