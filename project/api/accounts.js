@@ -47,7 +47,7 @@ router.post("/login", (req, res) => {
             }
 
             const { accessToken, refreshToken } = generateTokens(user);
-            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: false, sameSite: "lax", maxAge: 12 * 60 * 60 * 1000, path: "/" });
+            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000, path: "/" });
             res.status(200).json({ access_token: accessToken });
         }).catch(err => {
             res.status(500).json({ error: "Internal server error" });
@@ -63,7 +63,7 @@ router.post("/refresh-token", (req, res) => {
 
     refreshToken(token)
         .then(({ accessToken, newRefreshToken }) => {
-            res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: false, sameSite: "lax", maxAge: 12 * 60 * 60 * 1000 });
+            res.cookie("refresh_token", newRefreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000 });
             res.json({ access_token: accessToken });
         })
         .catch(() => res.status(401).json({ error: "Invalid refresh token" }));
@@ -75,7 +75,7 @@ router.delete("/delete", verifyToken, (req, res) => {
     db.query("DELETE FROM users WHERE username = ?", [username], (err, result) => {
         if (err) return res.status(500).json({ error: "Database error" });
         if (result.affectedRows === 0) return res.status(404).json({ error: "User not found" });
-        res.clearCookie("refresh_token", { httpOnly: true, secure: false, sameSite: "lax" });
+        res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
         res.json({ message: "User deleted successfully" });
     });
 });
@@ -105,7 +105,7 @@ router.put("/change-password",
                 argon2.hash(newPassword).then(hashedNewPassword => {
                     db.query("UPDATE users SET password = ? WHERE username = ?", [hashedNewPassword, username], (err) => {
                         if (err) return res.status(500).json({ error: "Database error" });
-                        res.clearCookie("refresh_token", { httpOnly: true, secure: false, sameSite: "lax" });
+                        res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
                         res.status(200).json({ message: "Password changed successfully. Please log in again." });
                     });
                 }).catch(() => res.status(500).json({ error: "Internal server error" }));
@@ -129,7 +129,7 @@ router.get("/info", verifyToken, (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-    res.clearCookie("refresh_token", { httpOnly: true, secure: false, sameSite: "lax" });
+    res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "strict" });
     res.status(200).json({ message: "Logged out successfully" });
 });
 
