@@ -2,28 +2,24 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f9;
-    color: #333;
+    background-color: #2e2e2e; /* Changed from #121212 to dark gray */
+    color: #ffffff; /* Changed text color to white */
     line-height: 1.6;
 }
 
 h1, h2 {
     text-align: center;
-    color: #444;
+    color: #ffffff; /* Changed headers color to white */
 }
 
 form {
     max-width: 400px;
     margin: 20px auto;
     padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #1e1e1e;
+    border: 1px solid #333;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-form button {
-    margin-bottom: 10px;
 }
 
 label {
@@ -33,18 +29,15 @@ label {
 }
 
 input[type="text"],
-input[type="email"],
-input[type="password"],
 textarea {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #333;
     border-radius: 4px;
     box-sizing: border-box;
-}
-
-textarea {
     resize: vertical;
 }
 
@@ -52,7 +45,7 @@ button {
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: #007bff;
+    background-color: #007bff; /* Changed to blue */
     color: white;
     border: none;
     border-radius: 4px;
@@ -61,11 +54,10 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #0056b3; /* Adjusted hover color for blue */
 }
 
-#logoutButton,
-#showInfoButton {
+#logoutButton{
     max-width: 400px;
     margin: 10px auto;
     display: block;
@@ -78,54 +70,10 @@ button:hover {
     font-size: 16px;
 }
 
-#logoutButton:hover,
-#showInfoButton:hover {
+#logoutButton:hover {
     background-color: #218838;
 }
 
-#userInfo {
-    max-width: 400px;
-    margin: 20px auto;
-    padding: 10px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-#registerRedirectButton {
-    display: block;
-    margin: 10px auto;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    text-align: center;
-}
-
-#registerRedirectButton:hover {
-    background-color: #5a6268;
-}
-
-#deleteUserButton {
-    max-width: 400px;
-    margin: 10px auto;
-    display: block;
-    padding: 10px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-#deleteUserButton:hover {
-    background-color: #c82333;
-}
 
 #accManagementButton {
     max-width: 400px;
@@ -155,8 +103,9 @@ button:hover {
     flex: 1 1 45%;
     max-width: 500px;
     margin: 15px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #2e2e2e; /* Changed to gray */
+    border: 1px solid #444; /* Adjusted border color for consistency */
+    color: #ffffff; /* Ensure text is white */
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     padding: 15px;
@@ -185,8 +134,8 @@ back:hover {
     max-width: 500px;
     margin: 20px auto;
     padding: 10px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #1e1e1e;
+    border: 1px solid #333;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -194,9 +143,9 @@ back:hover {
 .post-item {
     padding: 10px;
     margin: 10px 0;
-    border: 1px solid #ddd;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
     border-radius: 5px;
-    background: #fff;
     position: relative;
     cursor: pointer;
     word-wrap: break-word;
@@ -205,218 +154,10 @@ back:hover {
     text-overflow: ellipsis;
 }
 
-.post-item:hover {
-    background-color: #f9f9f9;
-}
-
-#postDetailView {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    display: none;
-}
-
-#postDetailTitle {
-    font-size: 1.5em;
-    margin-bottom: 10px;
-}
-
-#postDetailContent {
-    font-size: 1em;
-    margin-bottom: 20px;
-}
-
-#closePostDetail {
-    display: block;
-    margin: 0 auto;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    text-align: center;
-}
-
-#closePostDetail:hover {
-    background-color: #0056b3;
-}
-
-.post-container {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-.post-container h1 {
-    font-size: 1.8em;
-    margin-bottom: 15px;
-}
-
-.post-container p {
-    font-size: 1.2em;
-    margin-bottom: 20px;
-}
-
-.post-container .back {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    text-align: center;
-}
-
-.post-container .back:hover {
-    background-color: #0056b3;
-}
-
-.comments-container {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.comments-container h2 {
-    font-size: 1.5em;
-    margin-bottom: 15px;
-}
-
-.comment-item {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #ddd;
-    position: relative;
-    overflow: hidden;
-}
-
-.comment-item p {
-    margin: 0;
-    font-size: 1em;
-    word-wrap: break-word;
-    margin-right: 60px;
-}
-
-.comment-item small {
-    display: block;
-    margin-top: 5px;
-    color: #666;
-    font-size: 0.9em;
-}
-
-.comment-item .delete-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 5px 10px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.comment-item .delete-button:hover {
-    background-color: #c82333;
-}
-
-#addCommentForm {
-    margin-top: 20px;
-}
-
-#addCommentForm textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    resize: vertical;
-}
-
-#addCommentForm button {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-#addCommentForm button:hover {
-    background-color: #0056b3;
-}
-
-.delete-button {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    text-align: center;
-    width: auto;
-    margin: auto;
-}
-
-.delete-button:hover {
-    background-color: #c82333;
+post-item:hover {
+    background-color: #333;
 }
 
 .hidden {
     display: none !important;
 }
-
-#loginRedirectButton {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    text-align: center;
-}
-
-#loginRedirectButton:hover {
-    background-color: #5a6268;
-}
-
-#postTitle {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#postContent {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-

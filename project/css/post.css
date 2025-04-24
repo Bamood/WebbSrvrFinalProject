@@ -2,22 +2,22 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f9;
-    color: #333;
+    background-color: #2e2e2e; /* Changed to dark gray */
+    color: #ffffff; /* Changed text color to white */
     line-height: 1.6;
 }
 
 h1, h2 {
     text-align: center;
-    color: #444;
+    color: #ffffff; /* Changed headers color to white */
 }
 
 form {
     max-width: 400px;
     margin: 20px auto;
     padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #1e1e1e;
+    border: 1px solid #333;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -37,9 +37,12 @@ textarea {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #333;
     border-radius: 4px;
     box-sizing: border-box;
+    resize: vertical;
 }
 
 textarea {
@@ -50,8 +53,8 @@ button {
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: #007bff;
-    color: white;
+    background-color: #3a3a3a;
+    color: #e0e0e0;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -59,7 +62,7 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #555;
 }
 
 row-container {
@@ -103,8 +106,8 @@ back:hover {
     max-width: 800px;
     margin: 20px auto;
     padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #2e2e2e; /* Changed to dark gray */
+    border: 1px solid #444; /* Adjusted border color for consistency */
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     text-align: center;
@@ -140,8 +143,8 @@ back:hover {
     max-width: 800px;
     margin: 20px auto;
     padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #2e2e2e; /* Changed to dark gray */
+    border: 1px solid #444; /* Adjusted border color for consistency */
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -154,7 +157,8 @@ back:hover {
 .comment-item {
     padding: 10px;
     margin-bottom: 10px;
-    border-bottom: 1px solid #ddd;
+    background-color: #2e2e2e; /* Changed to dark gray */
+    border-bottom: 1px solid #444; /* Adjusted border color for consistency */
     position: relative;
     overflow: hidden;
 }
@@ -178,7 +182,7 @@ back:hover {
     top: 10px;
     right: 10px;
     padding: 5px 10px;
-    background-color: #dc3545;
+    background-color: #dc3545; /* Changed to red */
     color: white;
     border: none;
     border-radius: 4px;
@@ -187,18 +191,25 @@ back:hover {
 }
 
 .comment-item .delete-button:hover {
-    background-color: #c82333;
+    background-color: #c82333; /* Adjusted hover color for red */
 }
 
 #addCommentForm {
     margin-top: 20px;
+    background-color: #2e2e2e; /* Changed to dark gray */
+    padding: 20px;
+    border: 1px solid #444; /* Adjusted border color for consistency */
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 #addCommentForm textarea {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #333;
     border-radius: 4px;
     resize: vertical;
 }
@@ -207,7 +218,7 @@ back:hover {
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: #007bff;
+    background-color: #007bff; /* Changed back to blue */
     color: white;
     border: none;
     border-radius: 4px;
@@ -216,7 +227,7 @@ back:hover {
 }
 
 #addCommentForm button:hover {
-    background-color: #0056b3;
+    background-color: #0056b3; /* Adjusted hover color for blue */
 }
 
 .delete-button {
@@ -233,7 +244,7 @@ back:hover {
     margin: auto;
 }
 
-.delete-button:hover {
+delete-button:hover {
     background-color: #c82333;
 }
 

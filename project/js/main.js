@@ -127,7 +127,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
             sessionStorage.removeItem("access_token");
-            alert("Logged out successfully!");
             window.location.href = "login.html";
         } else {
             alert("Failed to log out. Please try again.");

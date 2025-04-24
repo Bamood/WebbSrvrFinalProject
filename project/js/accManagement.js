@@ -61,6 +61,12 @@ function startAccessTokenRefreshTimer() {
 startAccessTokenRefreshTimer();
 
 document.getElementById("showInfoButton")?.addEventListener("click", async () => {
+    const userInfoDiv = document.getElementById("userInfo");
+    if (!userInfoDiv.classList.contains("hidden")) {
+        userInfoDiv.classList.add("hidden");
+        return;
+    }
+
     const token = sessionStorage.getItem("access_token");
     if (!token || isTokenExpired(token)) {
         alert("Your session has expired. Please log in again.");
@@ -79,7 +85,7 @@ document.getElementById("showInfoButton")?.addEventListener("click", async () =>
         const data = await response.json();
         document.getElementById("infoUsername").textContent = data.username;
         document.getElementById("infoEmail").textContent = data.email;
-        document.getElementById("userInfo").classList.remove("hidden");
+        userInfoDiv.classList.remove("hidden");
     } else {
         const errorData = await response.json();
         alert("Error: " + (errorData.error || "Unknown error"));
@@ -100,6 +106,10 @@ document.getElementById("changePasswordForm")?.addEventListener("submit", async 
     if (!token || isTokenExpired(token)) {
         alert("Your session has expired. Please log in again.");
         window.location.href = "login.html";
+        return;
+    }
+
+    if (!confirm("Are you sure you want to change your password? This action cannot be undone.")) {
         return;
     }
 
@@ -127,6 +137,10 @@ document.getElementById("deleteUserButton")?.addEventListener("click", async () 
     if (!token || isTokenExpired(token)) {
         alert("Your session has expired. Please log in again.");
         window.location.href = "login.html";
+        return;
+    }
+
+    if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
         return;
     }
 
