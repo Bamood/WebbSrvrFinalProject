@@ -28,6 +28,9 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, "../project")));
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../project/login.html"));
+});
 
 app.use("/api/accounts", accountRoutes);
 app.use("/api/posts", postRoutes);

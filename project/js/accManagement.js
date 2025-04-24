@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 const decodeJWT = (token) => {
     const payload = token.split('.')[1];
     return JSON.parse(atob(payload));
@@ -7,6 +9,56 @@ const isTokenExpired = (token) => {
     const payload = decodeJWT(token);
     return payload.exp * 1000 <= Date.now();
 };
+async function refreshToken() {
+    try {
+        const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
+            method: "POST",
+            credentials: "include",
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            sessionStorage.setItem("access_token", data.access_token);
+            console.log("Access token refreshed successfully.");
+            return true;
+        } else {
+            sessionStorage.removeItem("access_token");
+            alert("Session expired. Redirecting to login page...");
+            window.location.href = "login.html";
+            return false;
+        }
+    } catch (error) {
+        alert("Please log in again.");
+        window.location.href = "login.html";
+        return false;
+    }
+}
+function startAccessTokenRefreshTimer() {
+    if (window.refreshTimer) return;
+
+    const token = sessionStorage.getItem("access_token");
+    if (!token) return;
+
+    const decodeJWT = (token) => {
+        const payload = token.split('.')[1];
+        return JSON.parse(atob(payload));
+    };
+
+    const payload = decodeJWT(token);
+    const refreshTime = payload.exp * 1000 - Date.now() - 60000;
+
+    if (refreshTime > 0) {
+        window.refreshTimer = setTimeout(async () => {
+            if (await refreshToken()) {
+                window.refreshTimer = null;
+                startAccessTokenRefreshTimer();
+                console.log("Timer restarted.");
+            }
+        }, refreshTime);
+    }
+}
+
+startAccessTokenRefreshTimer();
 
 document.getElementById("showInfoButton")?.addEventListener("click", async () => {
     const token = sessionStorage.getItem("access_token");
@@ -98,3 +150,4 @@ document.getElementById("backToDashboardButton")?.addEventListener("click", () =
     window.location.href = "main.html";
 });
 
+});

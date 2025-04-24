@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (response.ok) {
                 const data = await response.json();
                 sessionStorage.setItem("access_token", data.access_token);
+                console.log("Access token refreshed successfully.");
                 return true;
             } else {
                 sessionStorage.removeItem("access_token");
@@ -34,18 +35,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function startAccessTokenRefreshTimer() {
+        if (window.refreshTimer) return;
+    
         const token = sessionStorage.getItem("access_token");
         if (!token) return;
-
+    
+        const decodeJWT = (token) => {
+            const payload = token.split('.')[1];
+            return JSON.parse(atob(payload));
+        };
+    
         const payload = decodeJWT(token);
         const refreshTime = payload.exp * 1000 - Date.now() - 60000;
-
+    
         if (refreshTime > 0) {
-            setTimeout(async () => {
-                if (await refreshToken()) startAccessTokenRefreshTimer();
+            window.refreshTimer = setTimeout(async () => {
+                if (await refreshToken()) {
+                    window.refreshTimer = null;
+                    startAccessTokenRefreshTimer();
+                    console.log("Timer restarted.");
+                }
             }, refreshTime);
-        }
-    }
+        };
+    };
 
     startAccessTokenRefreshTimer();
 
