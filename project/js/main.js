@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (response.ok) {
                 const data = await response.json();
                 sessionStorage.setItem("access_token", data.access_token);
-                console.log("Access token refreshed successfully.");
                 return true;
             } else {
                 sessionStorage.removeItem("access_token");
@@ -53,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (await refreshToken()) {
                     window.refreshTimer = null;
                     startAccessTokenRefreshTimer();
-                    console.log("Timer restarted.");
                 }
             }, refreshTime);
         };
