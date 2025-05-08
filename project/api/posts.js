@@ -7,8 +7,8 @@ const router = express.Router();
 router.post("/",
     verifyToken,
     validateRequest([
-        body("title").isLength({ min: 1, max: 100 }).trim().escape().withMessage("Title must have a maximum of 100 characters."),
-        body("content").isLength({ min: 1 }).trim().escape().withMessage("Content cannot be empty.")
+        body("title").trim().escape().isLength({ min: 1, max: 100 }).withMessage("Title must have a maximum of 100 characters."),
+        body("content").trim().escape().isLength({ min: 1 }).withMessage("Content cannot be empty.")
     ]),
     (req, res) => {
         const { title, content } = req.body;

@@ -31,29 +31,34 @@ router.post("/register",
         });
     });
 
-router.post("/login", (req, res) => {
-    const { username, password } = req.body;
+router.post("/login", 
+    validateRequest([
+        body("username").trim().escape().isLength({ min: 3, max: 30 }).withMessage("Invalid username."),
+        body("password").isLength({ min: 4 }).withMessage("Invalid password.")
+    ]),
+    (req, res) => {
+        const { username, password } = req.body;
 
-    db.query("SELECT * FROM users WHERE username = ?", [username], (err, results) => {
-        if (err) return res.status(500).json({ error: "Internal server error" });
-        if (results.length === 0) {
-            return res.status(400).json({ error: "Invalid username or password" });
-        }
-
-        const user = results[0];
-        argon2.verify(user.password.toString(), password).then(validPassword => {
-            if (!validPassword) {
+        db.query("SELECT * FROM users WHERE username = ?", [username], (err, results) => {
+            if (err) return res.status(500).json({ error: "Internal server error" });
+            if (results.length === 0) {
                 return res.status(400).json({ error: "Invalid username or password" });
             }
 
-            const { accessToken, refreshToken } = generateTokens(user);
-            res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000, path: "/" });
-            res.status(200).json({ access_token: accessToken });
-        }).catch(err => {
-            res.status(500).json({ error: "Internal server error" });
+            const user = results[0];
+            argon2.verify(user.password.toString(), password).then(validPassword => {
+                if (!validPassword) {
+                    return res.status(400).json({ error: "Invalid username or password" });
+                }
+
+                const { accessToken, refreshToken } = generateTokens(user);
+                res.cookie("refresh_token", refreshToken, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 12 * 60 * 60 * 1000, path: "/" });
+                res.status(200).json({ access_token: accessToken });
+            }).catch(err => {
+                res.status(500).json({ error: "Internal server error" });
+            });
         });
     });
-});
 
 router.post("/refresh-token", (req, res) => {
     const token = req.cookies.refresh_token;
@@ -83,8 +88,8 @@ router.delete("/delete", verifyToken, (req, res) => {
 router.put("/change-password",
     verifyToken,
     validateRequest([
-        body("currentPassword").isLength({ min: 4 }).withMessage("Current password must be at least 4 characters long."),
-        body("newPassword").isLength({ min: 4 }).withMessage("New password must be at least 4 characters long.")
+        body("currentPassword").trim().escape().isLength({ min: 4 }).withMessage("Current password must be at least 4 characters long."),
+        body("newPassword").trim().escape().isLength({ min: 4 }).withMessage("New password must be at least 4 characters long.")
     ]),
     (req, res) => {
         const { currentPassword, newPassword } = req.body;
