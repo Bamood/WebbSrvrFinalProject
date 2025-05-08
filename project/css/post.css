@@ -2,14 +2,14 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #2e2e2e; /* Changed to dark gray */
-    color: #ffffff; /* Changed text color to white */
+    background-color: #2e2e2e;
+    color: #ffffff;
     line-height: 1.6;
 }
 
 h1, h2 {
     text-align: center;
-    color: #ffffff; /* Changed headers color to white */
+    color: #ffffff;
 }
 
 form {
@@ -106,8 +106,8 @@ back:hover {
     max-width: 800px;
     margin: 20px auto;
     padding: 20px;
-    background: #2e2e2e; /* Changed to dark gray */
-    border: 1px solid #444; /* Adjusted border color for consistency */
+    background: #2e2e2e;
+    border: 1px solid #444;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     text-align: center;
@@ -143,8 +143,8 @@ back:hover {
     max-width: 800px;
     margin: 20px auto;
     padding: 20px;
-    background: #2e2e2e; /* Changed to dark gray */
-    border: 1px solid #444; /* Adjusted border color for consistency */
+    background: #2e2e2e;
+    border: 1px solid #444;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -157,8 +157,8 @@ back:hover {
 .comment-item {
     padding: 10px;
     margin-bottom: 10px;
-    background-color: #2e2e2e; /* Changed to dark gray */
-    border-bottom: 1px solid #444; /* Adjusted border color for consistency */
+    background-color: #2e2e2e;
+    border-bottom: 1px solid #444;
     position: relative;
     overflow: hidden;
 }
@@ -182,7 +182,7 @@ back:hover {
     top: 10px;
     right: 10px;
     padding: 5px 10px;
-    background-color: #dc3545; /* Changed to red */
+    background-color: #dc3545;
     color: white;
     border: none;
     border-radius: 4px;
@@ -191,14 +191,14 @@ back:hover {
 }
 
 .comment-item .delete-button:hover {
-    background-color: #c82333; /* Adjusted hover color for red */
+    background-color: #c82333;
 }
 
 #addCommentForm {
     margin-top: 20px;
-    background-color: #2e2e2e; /* Changed to dark gray */
+    background-color: #2e2e2e;
     padding: 20px;
-    border: 1px solid #444; /* Adjusted border color for consistency */
+    border: 1px solid #444;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -218,7 +218,7 @@ back:hover {
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: #007bff; /* Changed back to blue */
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 4px;
@@ -227,7 +227,7 @@ back:hover {
 }
 
 #addCommentForm button:hover {
-    background-color: #0056b3; /* Adjusted hover color for blue */
+    background-color: #0056b3;
 }
 
 .delete-button {

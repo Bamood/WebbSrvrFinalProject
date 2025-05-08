@@ -2,14 +2,14 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #2e2e2e; /* Changed from #121212 to dark gray */
-    color: #ffffff; /* Changed text color to white */
+    background-color: #2e2e2e;
+    color: #ffffff;
     line-height: 1.6;
 }
 
 h2 {
     text-align: center;
-    color: #ffffff; /* Changed headers color to white */
+    color: #ffffff;
 }
 
 form {
@@ -44,7 +44,7 @@ button {
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: #007bff; /* Changed to blue */
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 4px;
@@ -53,7 +53,7 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3; /* Adjusted hover color for blue */
+    background-color: #0056b3;
 }
 
 #showInfoButton {
@@ -88,7 +88,7 @@ button:hover {
     margin: 10px auto;
     display: block;
     padding: 10px;
-    background-color: #dc3545; /* Changed to red */
+    background-color: #dc3545;
     color: white;
     border: none;
     border-radius: 4px;
@@ -97,7 +97,7 @@ button:hover {
 }
 
 #deleteUserButton:hover {
-    background-color: #c82333; /* Adjusted hover color for red */
+    background-color: #c82333;
 }
 
 .back {
