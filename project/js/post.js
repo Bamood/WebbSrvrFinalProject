@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+
 const postId = new URLSearchParams(window.location.search).get("id");
 const token = sessionStorage.getItem("access_token");
 const isTokenExpired = (token) => {
@@ -9,11 +10,26 @@ const decodeJWT = (token) => {
     const payload = token.split('.')[1];
     return JSON.parse(atob(payload));
 };
+
+// Get CSRF token from cookies
+function getCsrfToken() {
+    const tokenCookie = document.cookie.split(';')
+        .find(cookie => cookie.trim().startsWith('csrf_token='));
+    if (tokenCookie) {
+        return tokenCookie.split('=')[1];
+    }
+    return null;
+}
+
 async function refreshToken() {
     try {
+        const csrfToken = getCsrfToken();
         const response = await fetch("http://localhost:8000/api/accounts/refresh-token", {
             method: "POST",
             credentials: "include",
+            headers: {
+                "X-CSRF-Token": csrfToken
+            }
         });
 
         if (response.ok) {
@@ -33,6 +49,7 @@ async function refreshToken() {
         return false;
     }
 }
+
 function startAccessTokenRefreshTimer() {
     if (window.refreshTimer) return;
 
@@ -109,9 +126,13 @@ async function loadPostDetails() {
             deleteButton.addEventListener("click", async () => {
                 if (confirm("Are you sure you want to delete this post?")) {
                     try {
+                        const csrfToken = getCsrfToken();
                         const deleteResponse = await fetch(`http://localhost:8000/api/posts/${postId}`, {
                             method: "DELETE",
-                            headers: { "Authorization": "Bearer " + token },
+                            headers: { 
+                                "Authorization": "Bearer " + token,
+                                "X-CSRF-Token": csrfToken
+                            },
                         });
 
                         if (deleteResponse.ok) {
@@ -174,13 +195,17 @@ async function loadComments() {
                     deleteButton.addEventListener('click', async () => {
                         if (confirm("Are you sure you want to delete this comment?")) {
                             try {
+                                const csrfToken = getCsrfToken();
                                 const deleteResponse = await fetch(`http://localhost:8000/api/comments/${comment.id}`, {
                                     method: "DELETE",
-                                    headers: { "Authorization": "Bearer " + token },
+                                    headers: {
+                                        "Authorization": "Bearer " + token,
+                                        "X-CSRF-Token": csrfToken
+                                    },
                                 });
 
                                 if (deleteResponse.ok) {
-                                    loadComments(postId, token);
+                                    loadComments();
                                 } else {
                                     alert("Failed to delete comment.");
                                 }
@@ -208,14 +233,17 @@ document.getElementById("addCommentForm")?.addEventListener("submit", async (eve
 
     if (!commentContent) {
         alert("Comment cannot be empty.");
+        return;
     }
 
     try {
+        const csrfToken = getCsrfToken();
         const response = await fetch("http://localhost:8000/api/comments", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token,
+                "X-CSRF-Token": csrfToken
             },
             body: JSON.stringify({ postId: parseInt(postId, 10), comment: commentContent }),
         });

@@ -1,4 +1,49 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    const getCsrfToken = async () => {
+    try {
+        const response = await fetch('http://localhost:8000/api/csrf-token', {
+            method: 'GET',
+            credentials: 'include',
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch CSRF token');
+        }
+        
+        const data = await response.json();
+        return data.csrfToken;
+    } catch (error) {
+        console.error('Error fetching CSRF token:', error);
+        throw error;
+    }
+};
+
+const fetchWithCsrf = async (url, options = {}) => {
+    try {
+        const csrfToken = await getCsrfToken();
+        
+        const headers = options.headers || {};
+        
+        return fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: {
+                ...headers,
+                'CSRF-Token': csrfToken
+            }
+        });
+    } catch (error) {
+        console.error('Error in fetchWithCsrf:', error);
+        throw error;
+    }
+};
+    // Load the CSRF token when the page loads
+    try {
+        await getCsrfToken();
+    } catch (error) {
+        console.error("Failed to get initial CSRF token:", error);
+    }
+
     const decodeJWT = (token) => {
         const payload = token.split('.')[1];
         return JSON.parse(atob(payload));
@@ -81,7 +126,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            let response = await fetch("http://localhost:8000/api/posts", {
+            // Use CSRF-protected fetch
+            let response = await fetchWithCsrf("http://localhost:8000/api/posts", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -98,11 +144,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (response.status === 401 || response.status === 403) {
                 if (await refreshToken()) {
-                    response = await fetch("http://localhost:8000/api/posts", {
+                    token = sessionStorage.getItem("access_token");
+                    response = await fetchWithCsrf("http://localhost:8000/api/posts", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": "Bearer " + sessionStorage.getItem("access_token"),
+                            "Authorization": "Bearer " + token,
                         },
                         body: JSON.stringify({ title, content }),
                     });
@@ -110,24 +157,33 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (response.ok) {
+                document.getElementById("postTitle").value = "";
+                document.getElementById("postContent").value = "";
                 loadPosts();
             }
         } catch (error) {
+            console.error("Error creating post:", error);
             alert("An error occurred while creating the post. Please try again.");
         }
     });
 
     document.getElementById("logoutButton")?.addEventListener("click", async () => {
-        const response = await fetch("http://localhost:8000/api/accounts/logout", {
-            method: "POST",
-            credentials: "include",
-        });
+        try {
+            // Use CSRF-protected fetch for logout
+            const response = await fetchWithCsrf("http://localhost:8000/api/accounts/logout", {
+                method: "POST",
+                credentials: "include",
+            });
 
-        if (response.ok) {
-            sessionStorage.removeItem("access_token");
-            window.location.href = "login.html";
-        } else {
-            alert("Failed to log out. Please try again.");
+            if (response.ok) {
+                sessionStorage.removeItem("access_token");
+                window.location.href = "login.html";
+            } else {
+                alert("Failed to log out. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error during logout:", error);
+            alert("An error occurred during logout. Please try again.");
         }
     });
 
@@ -152,6 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch("http://localhost:8000/api/posts", {
                 method: "GET",
                 headers: { "Authorization": "Bearer " + token },
+                credentials: "include"
             });
 
             if (!response.ok) {
@@ -186,6 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 postsListDiv.appendChild(postElement);
             });
         } catch (error) {
+            console.error("Error loading posts:", error);
             postsListDiv.innerHTML = '<p>Error loading posts.</p>';
         }
     }
@@ -212,4 +270,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 });
-
