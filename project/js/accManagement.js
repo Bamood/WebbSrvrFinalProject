@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    // Load the CSRF token when the page loads
+   
         const getCsrfToken = async () => {
     try {
         const response = await fetch('http://localhost:8000/api/csrf-token', {
@@ -165,7 +165,7 @@ const fetchWithCsrf = async (url, options = {}) => {
         }
 
         try {
-            // Use CSRF-protected fetch
+           
             const response = await fetchWithCsrf("http://localhost:8000/api/accounts/change-password", {
                 method: "PUT",
                 headers: {
@@ -202,7 +202,7 @@ const fetchWithCsrf = async (url, options = {}) => {
         }
 
         try {
-            // Use CSRF-protected fetch
+           
             const response = await fetchWithCsrf("http://localhost:8000/api/accounts/delete", {
                 method: "DELETE",
                 headers: {

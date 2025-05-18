@@ -37,7 +37,7 @@ const fetchWithCsrf = async (url, options = {}) => {
         throw error;
     }
 };
-    // Load the CSRF token when the page loads
+  
     try {
         await getCsrfToken();
     } catch (error) {
@@ -126,7 +126,7 @@ const fetchWithCsrf = async (url, options = {}) => {
         }
 
         try {
-            // Use CSRF-protected fetch
+            
             let response = await fetchWithCsrf("http://localhost:8000/api/posts", {
                 method: "POST",
                 headers: {
@@ -169,7 +169,7 @@ const fetchWithCsrf = async (url, options = {}) => {
 
     document.getElementById("logoutButton")?.addEventListener("click", async () => {
         try {
-            // Use CSRF-protected fetch for logout
+       
             const response = await fetchWithCsrf("http://localhost:8000/api/accounts/logout", {
                 method: "POST",
                 credentials: "include",

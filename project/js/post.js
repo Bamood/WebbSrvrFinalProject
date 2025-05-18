@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    // CSRF Token Handling (consistent with other files)
+    
     const getCsrfToken = async () => {
         try {
             const response = await fetch('http://localhost:8000/api/csrf-token', {
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 
-    // Initialize CSRF token
+    
     try {
         await getCsrfToken();
     } catch (error) {

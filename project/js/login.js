@@ -37,7 +37,7 @@ const fetchWithCsrf = async (url, options = {}) => {
         throw error;
     }
 };
-    // Load the CSRF token when the page loads
+    
     try {
         await getCsrfToken();
     } catch (error) {
@@ -50,7 +50,7 @@ const fetchWithCsrf = async (url, options = {}) => {
         const password = document.getElementById("loginPassword").value;
 
         try {
-            // Use our CSRF-protected fetch method
+         
             const response = await fetchWithCsrf("http://localhost:8000/api/accounts/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
